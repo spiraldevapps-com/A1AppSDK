@@ -140,10 +140,10 @@ extension Ads: AdsType {
                 request: requestBuilder.build
             )
         }
-        let rewardedAdUnitId = configuration.rewardedID
-        if rewardedAdUnitId != "" {
-            rewardedAd = AdsRewarded(
-                adUnitId: rewardedAdUnitId,
+        let rewardedInterstitialAdUnitId = configuration.rewardedInterstitialID
+        if rewardedInterstitialAdUnitId != "" {
+            rewardedInterstitialAd = AdsRewardedInterstitial(
+                adUnitId: rewardedInterstitialAdUnitId,
                 request: requestBuilder.build
             )
         }
@@ -168,13 +168,13 @@ extension Ads: AdsType {
     }
     
     public func configureRewardedAds() {
-        let rewardedInterstitialAdUnitId = configuration?.rewardedInterstitialID
-        if let rewardedInterstitialAdUnitId = rewardedInterstitialAdUnitId, let requestBuilder =  self.requestBuilder {
-            rewardedInterstitialAd = AdsRewardedInterstitial(
-                adUnitId: rewardedInterstitialAdUnitId,
+        let rewardedAdUnitId = configuration?.rewardedID
+        if let rewardedAdUnitId = rewardedAdUnitId, let requestBuilder =  self.requestBuilder {
+            rewardedAd = AdsRewarded(
+                adUnitId: rewardedAdUnitId,
                 request: requestBuilder.build
             )
-            rewardedInterstitialAd?.load()
+            rewardedAd?.load()
         }
     }
 
