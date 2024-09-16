@@ -22,6 +22,7 @@ public struct AdsConfiguration: Codable {
     public var rewardedID: String
     public var rewardedInterstitialID: String = ""
     public var nativeID: String = ""
+    public var nativeEnabled: Bool
 
     enum CodingKeys: String, CodingKey {
         case interInterval = "inter_interval"
@@ -37,6 +38,9 @@ public struct AdsConfiguration: Codable {
         case interClickInterval = "inter_click_interval"
         case rewardedEnabled = "rewarded_enabled"
         case rewardedID = "rewarded_id"
+        case nativeID = "native_id"
+        case nativeEnabled = "native_enabled"
+
     }
     
     public init(from decoder: Decoder) throws {
@@ -57,8 +61,10 @@ public struct AdsConfiguration: Codable {
         // Provide default values for potentially missing fields
         self.rewardedEnabled = try container.decodeIfPresent(Bool.self, forKey: .rewardedEnabled) ?? false
         self.rewardedID = try container.decodeIfPresent(String.self, forKey: .rewardedID) ?? ""
+        self.nativeID = try container.decodeIfPresent(String.self, forKey: .nativeID) ?? ""
+        self.nativeEnabled = try container.decodeIfPresent(Bool.self, forKey: .nativeEnabled) ?? false
         self.rewardedInterstitialID = ""
-        self.nativeID = ""
+
     }
     
     public init() {
@@ -77,9 +83,10 @@ public struct AdsConfiguration: Codable {
         rewardedID = "ca-app-pub-3940256099942544/1712485313"
         rewardedInterstitialID = "ca-app-pub-3940256099942544/6978759866"
         nativeID = "ca-app-pub-3940256099942544/3986624511"
+        nativeEnabled = false
     }
     
-    public init(interInterval: Int, adsEnabled: Bool, interEnabled: Bool, interID: String, appOpenEnabled: Bool , appOpenID: String, bannerEnabled: Bool, bannerID: String, appOpenInterval: Int, appOpenInterInterval: Int, interClickInterval: Int, rewardedEnabled: Bool, rewardedID: String) {
+    public init(interInterval: Int, adsEnabled: Bool, interEnabled: Bool, interID: String, appOpenEnabled: Bool , appOpenID: String, bannerEnabled: Bool, bannerID: String, appOpenInterval: Int, appOpenInterInterval: Int, interClickInterval: Int, rewardedEnabled: Bool, rewardedID: String, nativeID: String, nativeEnabled: Bool) {
         self.interInterval = interInterval
         self.adsEnabled = adsEnabled
         self.interEnabled = interEnabled
@@ -93,6 +100,8 @@ public struct AdsConfiguration: Codable {
         self.interClickInterval = interClickInterval
         self.rewardedEnabled = rewardedEnabled
         self.rewardedID = rewardedID
+        self.nativeID = nativeID
+        self.nativeEnabled = nativeEnabled
     }
 }
 
