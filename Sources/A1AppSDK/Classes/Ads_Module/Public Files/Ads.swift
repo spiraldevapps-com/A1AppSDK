@@ -126,7 +126,7 @@ extension Ads: AdsType {
 
          // Create ads
         let appOpenAdUnitId = configuration.appOpenID
-        if appOpenAdUnitId != "" {
+        if appOpenAdUnitId != "" && configuration.appOpenEnabled {
             let appOpenAdUnitId = configuration.appOpenID
             appOpenAd = AppOpenAdManager(
                 adUnitId: appOpenAdUnitId,
@@ -134,7 +134,7 @@ extension Ads: AdsType {
             )
         }
         let interstitialAdUnitId = configuration.interID
-        if interstitialAdUnitId != "" {
+        if interstitialAdUnitId != "" && configuration.interEnabled {
             interstitialAd = AdsInterstitial(
                 adUnitId: interstitialAdUnitId,
                 request: requestBuilder.build
@@ -148,7 +148,7 @@ extension Ads: AdsType {
             )
         }
         let nativeAdUnitId = configuration.nativeID
-        if nativeAdUnitId != "" {
+        if nativeAdUnitId != ""  && configuration.nativeEnabled {
             nativeAd = AdsNative(
                 adUnitId: nativeAdUnitId,
                 request: requestBuilder.build
@@ -168,13 +168,15 @@ extension Ads: AdsType {
     }
     
     public func configureRewardedAds() {
-        let rewardedAdUnitId = configuration?.rewardedID
+        let rewardedAdUnitId = configuration?.rewardedID; let enabled = configuration?.appOpenEnabled ?? false
         if let rewardedAdUnitId = rewardedAdUnitId, let requestBuilder =  self.requestBuilder {
-            rewardedAd = AdsRewarded(
-                adUnitId: rewardedAdUnitId,
-                request: requestBuilder.build
-            )
-            rewardedAd?.load()
+            if enabled {
+                rewardedAd = AdsRewarded(
+                    adUnitId: rewardedAdUnitId,
+                    request: requestBuilder.build
+                )
+                rewardedAd?.load()
+            }
         }
     }
 
