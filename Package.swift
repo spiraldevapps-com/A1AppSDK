@@ -16,10 +16,10 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.9.1"),
-        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "10.29.0"),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "10.29.0"),
         .package(url: "https://github.com/facebook/facebook-ios-sdk.git", from: "17.0.2"),
         .package(url: "https://github.com/yandexmobile/metrica-sdk-ios", exact: "4.5.2"),
-        .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", from: "11.0.0"),
+        .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.0.0"),
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", from: "5.0.2"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", from: "2.2.0"),
         .package(url: "https://github.com/helpscout/beacon-ios-sdk", from: "3.0.1"),
