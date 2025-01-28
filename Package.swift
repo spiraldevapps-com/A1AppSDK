@@ -23,7 +23,7 @@ let package = Package(
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", exact: "5.0.2"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
         .package(url: "https://github.com/helpscout/beacon-ios-sdk", exact: "3.0.1"),
-        .package(url: "https://github.com/microsoft/clarity-apps", branch: "main"),
+        .package(url: "https://github.com/microsoft/clarity-apps", exact: "2.1.2"),
         
     ],
     targets: [
