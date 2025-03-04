@@ -119,7 +119,7 @@ public class EventManager: NSObject {
         }
     }
 
-    public func logEvent(title: String, params: [String: String]? = nil) {
+    public func logEvent(title: String, params: [String: Any]? = nil) {
         if !appMetricaKey.isEmpty {
             YMMYandexMetrica.reportEvent(title, parameters: params)
         }
