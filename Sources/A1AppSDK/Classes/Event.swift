@@ -8,9 +8,7 @@
 import Foundation
 import UIKit
 import YandexMobileMetrica
-import FBSDKCoreKit
 import FirebaseAnalytics
-import FirebaseCore
 
 public enum PurchaselyKey: String {
     
@@ -92,12 +90,10 @@ public class EventManager: NSObject {
     public static var shared = EventManager()
     private var appMetricaKey = ""
     private var firebase = true
-    private var facebook = true
     
-    public func configureEventManager(appMetricaKey: String = "",userId: String = "", firebase: Bool = true, facebook: Bool = true) {
+    public func configureEventManager(appMetricaKey: String = "",userId: String = "", firebase: Bool = true) {
         self.appMetricaKey = appMetricaKey
         self.firebase = firebase
-        self.facebook = facebook
         if !appMetricaKey.isEmpty {
             let configuration = YMMYandexMetricaConfiguration.init(apiKey: appMetricaKey)
             configuration?.logs = true
@@ -114,9 +110,6 @@ public class EventManager: NSObject {
         if firebase {
             Analytics.logEvent(title, parameters: [key: value])
         }
-        if facebook {
-            AppEvents.shared.logEvent(AppEvents.Name(title), parameters: [AppEvents.ParameterName(key): value])
-        }
     }
 
     public func logEvent(title: String, params: [String: Any]? = nil) {
@@ -125,17 +118,6 @@ public class EventManager: NSObject {
         }
         if firebase {
             Analytics.logEvent(title, parameters: params)
-        }
-        if facebook {
-            if let myparams = params {
-                let appEventsParams = myparams.map { key, value in
-                    (AppEvents.ParameterName(key), value)
-                }
-                let parameters = Dictionary(uniqueKeysWithValues: appEventsParams)
-                AppEvents.shared.logEvent(AppEvents.Name(title), parameters: parameters)
-            } else {
-                AppEvents.shared.logEvent(AppEvents.Name(title), parameters: nil)
-            }
         }
     }
     
@@ -146,19 +128,9 @@ public class EventManager: NSObject {
         if firebase {
             Analytics.logEvent(title, parameters: [proOpenFromKey: from])
         }
-        if facebook {
-            AppEvents.shared.logEvent(AppEvents.Name(title), parameters: [AppEvents.ParameterName(proOpenFromKey): from])
-        }
     }
 
     public func logFacebookEvent(name: String, params: [String: String]) {
-        if facebook {
-            let appEventsParams = params.map { key, value in
-                (AppEvents.ParameterName(key), value)
-            }
-            let parameters = Dictionary(uniqueKeysWithValues: appEventsParams)
-            AppEvents.shared.logEvent(AppEvents.Name(name), parameters: parameters)
-        }
         //Add same events for google as well
         if firebase {
             Analytics.logEvent(name, parameters: params)
