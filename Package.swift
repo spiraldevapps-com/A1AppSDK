@@ -18,7 +18,6 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/Alamofire/Alamofire.git", exact: "5.9.1"),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "11.9.0"),
-        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", exact: "18.0.0"),
         .package(url: "https://github.com/yandexmobile/metrica-sdk-ios", exact: "4.5.2"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", exact: "5.0.2"),
@@ -50,24 +49,14 @@ let package = Package(
                 .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseRemoteConfig", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseStorage", package: "firebase-ios-sdk"),
-// MARK: - Facebook
-                .product(name: "FacebookCore", package: "facebook-ios-sdk"),
-                .product(name: "FacebookLogin", package: "facebook-ios-sdk"),
-                .product(name: "FacebookAEM", package: "facebook-ios-sdk"),
-                .product(name: "FacebookBasics", package: "facebook-ios-sdk"),
-                
+                .product(name: "FirebaseStorage", package: "firebase-ios-sdk"),                
 
                 .product(name: "YandexMobileMetrica", package: "metrica-sdk-ios"),
                 
                 .product(name: "GoogleMobileAds", package: "swift-package-manager-google-mobile-ads"),
-                
-                .product(name: "SwiftyJSON", package: "SwiftyJSON"),
-                
+                                
                 .product(name: "ShimmerSwift", package: "ShimmerSwift"),
-                
-                .product(name: "Beacon-iOS", package: "beacon-ios-sdk"),
-                
+                                
                 .product(name: "Clarity", package: "clarity-apps"),
 
                 
