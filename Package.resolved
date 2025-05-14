@@ -1,5 +1,5 @@
 {
-  "originHash" : "e2fabe72ceef66b67ac30666c263f23e83b67979ebc0dbcde0b930c4120b6581",
+  "originHash" : "861d638b07a6503ad6c21c82db2e90e9350b06e4ea55422595e6d9238fdbfb10",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -26,15 +26,6 @@
       "state" : {
         "revision" : "61b85103a1aeed8218f17c794687781505fbbef5",
         "version" : "11.2.0"
-      }
-    },
-    {
-      "identity" : "beacon-ios-sdk",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/helpscout/beacon-ios-sdk",
-      "state" : {
-        "revision" : "600aeb2a9984883a535882e48fd1296fa2c98aaf",
-        "version" : "3.0.1"
       }
     },
     {
@@ -179,15 +170,6 @@
       "state" : {
         "revision" : "edb6ed4919f7756157fe02f2552b7e3850a538e5",
         "version" : "1.28.1"
-      }
-    },
-    {
-      "identity" : "swiftyjson",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SwiftyJSON/SwiftyJSON.git",
-      "state" : {
-        "revision" : "af76cf3ef710b6ca5f8c05f3a31307d44a3c5828",
-        "version" : "5.0.2"
       }
     }
   ],

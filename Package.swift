@@ -20,9 +20,7 @@ let package = Package(
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "11.9.0"),
         .package(url: "https://github.com/yandexmobile/metrica-sdk-ios", exact: "4.5.2"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
-        .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", exact: "5.0.2"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
-        .package(url: "https://github.com/helpscout/beacon-ios-sdk", exact: "3.0.1"),
         .package(url: "https://github.com/microsoft/clarity-apps", exact: "2.1.2"),
         
     ],
@@ -37,19 +35,13 @@ let package = Package(
 // MARK: - Firebase
                 .product(name: "FirebaseAnalytics", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseAppCheck", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseAppDistribution-Beta", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseCrashlytics", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseDatabase", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseDynamicLinks", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseFunctions", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseInAppMessaging-Beta", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseInstallations", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseRemoteConfig", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseStorage", package: "firebase-ios-sdk"),                
 
                 .product(name: "YandexMobileMetrica", package: "metrica-sdk-ios"),
                 
