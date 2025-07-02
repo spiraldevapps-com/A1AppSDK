@@ -1,5 +1,5 @@
 {
-  "originHash" : "d4a2ae3bd8f896c1471767025dfe9f9070c17bb68367e1f170057976730952c4",
+  "originHash" : "9af923938e456fba02263a80cfcb9fcea647996c7b37e4f0fc24c282c5e2e822",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -26,6 +26,15 @@
       "state" : {
         "revision" : "61b85103a1aeed8218f17c794687781505fbbef5",
         "version" : "11.2.0"
+      }
+    },
+    {
+      "identity" : "appmetrica-sdk-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/appmetrica/appmetrica-sdk-ios",
+      "state" : {
+        "revision" : "32783c93cc9015868f72295dc10129182c0dbbc3",
+        "version" : "5.8.1"
       }
     },
     {
@@ -119,21 +128,21 @@
       }
     },
     {
+      "identity" : "kscrash",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kstenerud/KSCrash",
+      "state" : {
+        "revision" : "b87a3ef5b0b84e2a34a546b9836813756cd362a9",
+        "version" : "2.0.0"
+      }
+    },
+    {
       "identity" : "leveldb",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/leveldb.git",
       "state" : {
         "revision" : "a0bc79961d7be727d258d33d5a6b2f1023270ba1",
         "version" : "1.22.5"
-      }
-    },
-    {
-      "identity" : "metrica-sdk-ios",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/yandexmobile/metrica-sdk-ios",
-      "state" : {
-        "revision" : "13d8b11181a33938ef42759d49466a621df5e7db",
-        "version" : "4.5.2"
       }
     },
     {

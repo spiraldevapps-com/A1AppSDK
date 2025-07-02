@@ -7,10 +7,11 @@
 
 import Foundation
 import UIKit
-import YandexMobileMetrica
 import FBSDKCoreKit
 import FirebaseAnalytics
 import FirebaseCore
+import AppMetricaCore
+import AppMetricaCrashes
 
 public enum PurchaselyKey: String {
     
@@ -99,17 +100,17 @@ public class EventManager: NSObject {
         self.firebase = firebase
         self.facebook = facebook
         if !appMetricaKey.isEmpty {
-            let configuration = YMMYandexMetricaConfiguration.init(apiKey: appMetricaKey)
-            configuration?.logs = true
+            let configuration = AppMetricaConfiguration(apiKey: appMetricaKey)
             configuration?.userProfileID = userId
-            YMMYandexMetrica.activate(with: configuration!)
+            configuration?.areLogsEnabled = true
+            AppMetrica.activate(with: configuration!)
         }
         logEvent(title: PurchaselyKey.event_app_first_open.rawValue)
     }
 
     public func logEvent(title: String, key: String, value: String) {
         if !appMetricaKey.isEmpty {
-            YMMYandexMetrica.reportEvent(title, parameters: [key : value])
+            AppMetrica.reportEvent(name: title, parameters: [key : value])
         }
         if firebase {
             Analytics.logEvent(title, parameters: [key: value])
@@ -121,7 +122,7 @@ public class EventManager: NSObject {
 
     public func logEvent(title: String, params: [String: Any]? = nil) {
         if !appMetricaKey.isEmpty {
-            YMMYandexMetrica.reportEvent(title, parameters: params)
+            AppMetrica.reportEvent(name: title, parameters: params)
         }
         if firebase {
             Analytics.logEvent(title, parameters: params)
@@ -141,7 +142,7 @@ public class EventManager: NSObject {
     
     public func logProOpenedEvent(title: String, from: String) {
         if !appMetricaKey.isEmpty {
-            YMMYandexMetrica.reportEvent(title, parameters: [proOpenFromKey: from])
+            AppMetrica.reportEvent(name: title, parameters: [proOpenFromKey: from])
         }
         if firebase {
             Analytics.logEvent(title, parameters: [proOpenFromKey: from])
