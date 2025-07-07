@@ -8,13 +8,9 @@
 
 import UIKit
 import GoogleMobileAds
-import Alamofire
 
 public var isReachable: Bool {
-    guard (NetworkReachabilityManager()?.isReachable)! else {
-        return false
-    }
-    return true
+   return NetworkReachability.isConnectedToNetwork()
 }
 
 public class AdsHandler {

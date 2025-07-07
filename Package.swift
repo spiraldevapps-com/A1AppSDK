@@ -16,7 +16,6 @@ let package = Package(
             targets: ["A1AppSDK"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/Alamofire/Alamofire.git", exact: "5.9.1"),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "11.9.0"),
         .package(url: "https://github.com/yandexmobile/metrica-sdk-ios", exact: "4.5.2"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
@@ -30,8 +29,6 @@ let package = Package(
         .target(
             name: "A1AppSDK",
             dependencies: [
-// MARK: - Alamofire
-                "Alamofire",
 // MARK: - Firebase
                 .product(name: "FirebaseAnalytics", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
