@@ -38,8 +38,6 @@ let package = Package(
                 .product(name: "FirebaseAppDistribution-Beta", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseCrashlytics", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseDynamicLinks", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseInAppMessaging-Beta", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseRemoteConfig", package: "firebase-ios-sdk"),
 
