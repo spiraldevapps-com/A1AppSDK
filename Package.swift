@@ -18,7 +18,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/Alamofire/Alamofire.git", exact: "5.9.1"),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "11.9.0"),
-        .package(url: "https://github.com/yandexmobile/metrica-sdk-ios", exact: "4.5.2"),
+        .package(url: "https://github.com/appmetrica/appmetrica-sdk-ios", exact: "5.8.1"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
         .package(url: "https://github.com/microsoft/clarity-apps", exact: "2.1.2"),
@@ -41,8 +41,10 @@ let package = Package(
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseRemoteConfig", package: "firebase-ios-sdk"),
 
-                .product(name: "YandexMobileMetrica", package: "metrica-sdk-ios"),
-                
+                // MARK: - Appmetrica.
+                .product(name: "AppMetricaCore", package: "appmetrica-sdk-ios"),
+                .product(name: "AppMetricaCrashes", package: "appmetrica-sdk-ios"),
+
                 .product(name: "GoogleMobileAds", package: "swift-package-manager-google-mobile-ads"),
                                 
                 .product(name: "ShimmerSwift", package: "ShimmerSwift"),
