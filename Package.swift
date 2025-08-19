@@ -21,7 +21,7 @@ let package = Package(
         .package(url: "https://github.com/appmetrica/appmetrica-sdk-ios", exact: "5.8.1"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
-        .package(url: "https://github.com/microsoft/clarity-apps", exact: "3.0.15"),
+        .package(url: "https://github.com/microsoft/clarity-apps", exact: "3.0.10"),
         
     ],
     targets: [
