@@ -40,6 +40,7 @@ let package = Package(
                 .product(name: "FirebaseDynamicLinks", package: "firebase-ios-sdk"),
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseRemoteConfig", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
 
                 // MARK: - Appmetrica.
                 .product(name: "AppMetricaCore", package: "appmetrica-sdk-ios"),
