@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "A1AppSDK",
     platforms: [
-           .iOS(.v14), // Adjust platform version as needed
+           .iOS(.v15), // Adjust platform version as needed
            .macOS(.v12),
        ],
     products: [
