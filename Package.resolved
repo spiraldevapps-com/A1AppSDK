@@ -1,5 +1,5 @@
 {
-  "originHash" : "f165865bd5baec4b5b7c13f4a1690919469ea9cb2649c7df7f601e4cf63131bd",
+  "originHash" : "29a63414804c628d0261d54e3ce4be0cb0d11b6bc9ed0be59138d882b5c8c73d",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -35,15 +35,6 @@
       "state" : {
         "revision" : "32783c93cc9015868f72295dc10129182c0dbbc3",
         "version" : "5.8.1"
-      }
-    },
-    {
-      "identity" : "beacon-ios-sdk",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/helpscout/beacon-ios-sdk",
-      "state" : {
-        "revision" : "600aeb2a9984883a535882e48fd1296fa2c98aaf",
-        "version" : "3.0.1"
       }
     },
     {

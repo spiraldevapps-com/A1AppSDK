@@ -23,7 +23,6 @@ let package = Package(
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", exact: "5.0.2"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
-        .package(url: "https://github.com/helpscout/beacon-ios-sdk", exact: "3.0.1"),
         .package(url: "https://github.com/microsoft/clarity-apps", exact: "3.0.10"),
         
     ],
@@ -66,8 +65,6 @@ let package = Package(
                 .product(name: "SwiftyJSON", package: "SwiftyJSON"),
                 
                 .product(name: "ShimmerSwift", package: "ShimmerSwift"),
-                
-                .product(name: "Beacon-iOS", package: "beacon-ios-sdk"),
                 
                 .product(name: "Clarity", package: "clarity-apps"),
 
