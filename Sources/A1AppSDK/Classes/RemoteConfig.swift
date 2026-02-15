@@ -69,17 +69,17 @@ public struct AdsConfiguration: Codable {
     
     public init() {
         interInterval = 10
-        adsEnabled = true
-        interEnabled = true
+        adsEnabled = false
+        interEnabled = false
         interID = "ca-app-pub-3940256099942544/4411468910"
-        appOpenEnabled = true
+        appOpenEnabled = false
         appOpenID = "ca-app-pub-3940256099942544/9257395921"
-        bannerEnabled = true
+        bannerEnabled = false
         bannerID = "ca-app-pub-3940256099942544/2934735716"
         appOpenInterval = 10
         appOpenInterInterval = 10
         interClickInterval = 2
-        rewardedEnabled = true
+        rewardedEnabled = false
         rewardedID = "ca-app-pub-3940256099942544/1712485313"
         rewardedInterstitialID = "ca-app-pub-3940256099942544/6978759866"
         nativeID = "ca-app-pub-3940256099942544/3986624511"
