@@ -18,7 +18,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/Alamofire/Alamofire.git", exact: "5.9.1"),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "12.6.0"),
-        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", exact: "18.0.1"),
+        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", exact: "18.0.2"),
         .package(url: "https://github.com/appmetrica/appmetrica-sdk-ios", exact: "5.8.1"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", exact: "5.0.2"),
