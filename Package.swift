@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "A1AppSDK",
     platforms: [
-           .iOS(.v14), // Adjust platform version as needed
+           .iOS(.v15), // Adjust platform version as needed
            .macOS(.v12),
        ],
     products: [
@@ -17,15 +17,13 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/Alamofire/Alamofire.git", exact: "5.9.1"),
-        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "11.15.0"),
-        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", exact: "18.0.1"),
-        .package(url: "https://github.com/yandexmobile/metrica-sdk-ios", exact: "4.5.2"),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "12.6.0"),
+        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", exact: "18.0.2"),
+        .package(url: "https://github.com/appmetrica/appmetrica-sdk-ios", exact: "5.14.0"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
-        .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", exact: "5.0.2"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
-        .package(url: "https://github.com/helpscout/beacon-ios-sdk", exact: "3.0.1"),
-        .package(url: "https://github.com/microsoft/clarity-apps", exact: "3.0.10"),
-        
+        .package(url: "https://github.com/microsoft/clarity-apps", exact: "3.4.0"),
+        .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.5.2")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -42,7 +40,6 @@ let package = Package(
                 .product(name: "FirebaseAppDistribution-Beta", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseCrashlytics", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseDatabase", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseDynamicLinks", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseFunctions", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseInAppMessaging-Beta", package: "firebase-ios-sdk"),
@@ -58,19 +55,21 @@ let package = Package(
                 .product(name: "FacebookAEM", package: "facebook-ios-sdk"),
                 .product(name: "FacebookBasics", package: "facebook-ios-sdk"),
                 
-
-                .product(name: "YandexMobileMetrica", package: "metrica-sdk-ios"),
+                // MARK: - Appmetrica.
+                .product(name: "AppMetricaCore", package: "appmetrica-sdk-ios"),
+                .product(name: "AppMetricaCrashes", package: "appmetrica-sdk-ios"),
                 
+                // MARK: - Intercom.
+                .product(name: "Intercom", package: "intercom-ios-sp"),
+                
+                // MARK: - Google Mobile Ads.
                 .product(name: "GoogleMobileAds", package: "swift-package-manager-google-mobile-ads"),
                 
-                .product(name: "SwiftyJSON", package: "SwiftyJSON"),
-                
+                // MARK: - Shimmer Swift.
                 .product(name: "ShimmerSwift", package: "ShimmerSwift"),
                 
-                .product(name: "Beacon-iOS", package: "beacon-ios-sdk"),
-                
+                // MARK: - Clarity.
                 .product(name: "Clarity", package: "clarity-apps"),
-
                 
             ], path: "Sources"),
     ]
