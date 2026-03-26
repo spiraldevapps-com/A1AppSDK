@@ -1,5 +1,5 @@
 {
-  "originHash" : "568b48390b64923f126752f55e51e87b4c07a92753db14e6f731878c5714ce4c",
+  "originHash" : "52480e29c7d4761b64af6a0a0c05612b9f2dbebefc60f26fceb5addab5e3a0e2",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -123,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/intercom/intercom-ios-sp",
       "state" : {
-        "revision" : "c4ea9d8d430e0ffee6bf084de7cdd506e4c00c1b",
-        "version" : "19.5.2"
+        "revision" : "035258868b1b956ea27b15e9fc5f1a8ce1fd81b9",
+        "version" : "19.5.5"
       }
     },
     {

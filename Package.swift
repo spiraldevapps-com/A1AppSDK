@@ -23,7 +23,7 @@ let package = Package(
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
         .package(url: "https://github.com/microsoft/clarity-apps", exact: "3.4.0"),
-        .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.5.2")
+        .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.5.5")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
