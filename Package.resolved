@@ -1,5 +1,5 @@
 {
-  "originHash" : "46bbb1cfa996e7b8927f6332654ab2d3cce3a375729c4eb835b65ad9d1ce1b55",
+  "originHash" : "68aeeceed2836ddf6d9fef1f793636b66570f09edde5d19551f333e3952846e5",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/microsoft/clarity-apps",
       "state" : {
-        "revision" : "b264fea774e09a5926d857a30e2626dced0cac76",
-        "version" : "3.4.4"
+        "revision" : "8849ba4cb6e9abbdeac7d61eb265382c7af19fbe",
+        "version" : "3.4.0"
       }
     },
     {
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/firebase-ios-sdk.git",
       "state" : {
-        "revision" : "087bb95235f676c1a37e928769a5b6645dcbd325",
-        "version" : "12.6.0"
+        "revision" : "d47760f97a853808be6a045d278fbd12abf546b6",
+        "version" : "12.12.0"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/googleads/google-ads-on-device-conversion-ios-sdk",
       "state" : {
-        "revision" : "35b601a60fbbea2de3ea461f604deaaa4d8bbd0c",
-        "version" : "3.2.0"
+        "revision" : "23fa6970874ec8f3ac0039b3778ca8d6545d50ee",
+        "version" : "3.4.2"
       }
     },
     {
@@ -78,8 +78,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/google/GoogleAppMeasurement.git",
       "state" : {
-        "revision" : "c2d59acf17a8ba7ed80a763593c67c9c7c006ad1",
-        "version" : "12.5.0"
+        "revision" : "1657f705bc70255ff9d66dfcc697a85db164998f",
+        "version" : "12.11.0"
       }
     },
     {
@@ -197,15 +197,6 @@
       "state" : {
         "revision" : "74f2ec169551c3b924947b473716142a0b983e10",
         "version" : "2.6.0"
-      }
-    },
-    {
-      "identity" : "swift-protobuf",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-protobuf.git",
-      "state" : {
-        "revision" : "edb6ed4919f7756157fe02f2552b7e3850a538e5",
-        "version" : "1.28.1"
       }
     }
   ],
