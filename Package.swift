@@ -17,13 +17,13 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/Alamofire/Alamofire.git", exact: "5.9.1"),
-        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "12.12.0"),
-        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", exact: "18.0.2"),
-        .package(url: "https://github.com/appmetrica/appmetrica-sdk-ios", exact: "5.14.0"),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "12.16.0"),
+        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", exact: "18.1.0"),
+        .package(url: "https://github.com/appmetrica/appmetrica-sdk-ios", exact: "6.5.1"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
         .package(url: "https://github.com/microsoft/clarity-apps", exact: "3.5.4"),
-        .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.5.5")
+        .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.7.1")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -74,3 +74,10 @@ let package = Package(
             ], path: "Sources"),
     ]
 )
+
+
+/*
+ 
+ 
+ 
+ */
