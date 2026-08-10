@@ -12,7 +12,7 @@ final class AdsBanner: NSObject {
     // MARK: - Properties
 
     private let isDisabled: () -> Bool
-    private let request: () -> GADRequest
+    private let request: () -> Request
 
     private var onOpen: (() -> Void)?
     private var onClose: (() -> Void)?
@@ -21,7 +21,7 @@ final class AdsBanner: NSObject {
     private var onWillDismissScreen: (() -> Void)?
     private var onDidDismissScreen: (() -> Void)?
 
-    private var bannerView: GADBannerView?
+    private var bannerView: BannerView?
     private var shimmer: ShimmeringView = ShimmeringView()
     private var shimmerContentView: UIView = UIView()
     private var bannerContainer: UIView = UIView()
@@ -29,7 +29,7 @@ final class AdsBanner: NSObject {
     // MARK: - Initialization
     
     init(isDisabled: @escaping () -> Bool,
-         request: @escaping () -> GADRequest) {
+         request: @escaping () -> Request) {
         self.isDisabled = isDisabled
         self.request = request
         super.init()
@@ -52,7 +52,7 @@ final class AdsBanner: NSObject {
         self.onWillDismissScreen = onWillDismissScreen
         self.onDidDismissScreen = onDidDismissScreen
         // Create banner view
-        let bannerView = GADBannerView()
+        let bannerView = BannerView()
         bannerView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 60)
 
         // Keep reference to created banner view
@@ -90,7 +90,7 @@ extension AdsBanner: AdsBannerType {
         EventManager.shared.logEvent(title: AdsKey.event_ad_banner_shown.rawValue)
         guard !isDisabled() else { return }
         guard let bannerView = bannerView else { return }
-        bannerView.adSize = GADPortraitAnchoredAdaptiveBannerAdSizeWithWidth(UIScreen.main.bounds.width)
+        bannerView.adSize = largePortraitAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width)
         bannerView.load(request())
     }
     
@@ -115,21 +115,21 @@ extension AdsBanner: AdsBannerType {
     }
 }
 
-// MARK: - GADBannerViewDelegate
+// MARK: - BannerViewDelegate
 
-extension AdsBanner: GADBannerViewDelegate {
+extension AdsBanner: BannerViewDelegate {
     // Request lifecycle events
-    func bannerViewDidRecordImpression(_ bannerView: GADBannerView) {
+    func bannerViewDidRecordImpression(_ bannerView: BannerView) {
         print("AdsBanner did record impression for banner ad")
     }
     
-    func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+    func bannerViewDidReceiveAd(_ bannerView: BannerView) {
         onOpen?()
         shimmer.isHidden = true
         print("AdsBanner did receive ad from: \(bannerView.responseInfo?.loadedAdNetworkResponseInfo?.adNetworkClassName ?? "not found")")
     }
 
-    func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
+    func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
         EventManager.shared.logEvent(title: AdsKey.event_ad_banner_load_failed.rawValue)
         EventManager.shared.logEvent(title: AppErrorKey.event_ad_error_load_failed.rawValue, key: "error", value: error.localizedDescription)
         onError?(error)
@@ -137,16 +137,16 @@ extension AdsBanner: GADBannerViewDelegate {
     }
 
     // Click-Time lifecycle events
-    func bannerViewWillPresentScreen(_ bannerView: GADBannerView) {
+    func bannerViewWillPresentScreen(_ bannerView: BannerView) {
         EventManager.shared.logEvent(title: AdsKey.event_ad_banner_show_requested.rawValue)
         onWillPresentScreen?()
     }
 
-    func bannerViewWillDismissScreen(_ bannerView: GADBannerView) {
+    func bannerViewWillDismissScreen(_ bannerView: BannerView) {
         onWillDismissScreen?()
     }
 
-    func bannerViewDidDismissScreen(_ bannerView: GADBannerView) {
+    func bannerViewDidDismissScreen(_ bannerView: BannerView) {
         onDidDismissScreen?()
     }
 }

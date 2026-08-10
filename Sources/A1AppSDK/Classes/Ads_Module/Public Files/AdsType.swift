@@ -28,7 +28,7 @@ public enum AdsNativeAdLoaderOptions {
 }
 
 public protocol AdsRequestBuilderType: AnyObject {
-    func build() -> GADRequest
+    func build() -> Request
 }
 
 public protocol AdsType: AnyObject {
@@ -78,7 +78,7 @@ public protocol AdsType: AnyObject {
                       loaderOptions: AdsNativeAdLoaderOptions,
                       onFinishLoading: (() -> Void)?,
                       onError: ((Error) -> Void)?,
-                      onReceive: @escaping (GADNativeAd) -> Void)
+                      onReceive: @escaping (NativeAd) -> Void)
     
     func setDisabled(_ isDisabled: Bool)
     

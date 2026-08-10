@@ -21,7 +21,7 @@ public final class Ads: NSObject {
 
     // MARK: - Properties
     
-    private let mobileAds: GADMobileAds
+    private let mobileAds: MobileAds
 
     private var configuration: AdsConfiguration?
     private var requestBuilder: AdsRequestBuilderType?
@@ -35,9 +35,9 @@ public final class Ads: NSObject {
     // MARK: - Initialization
     
     private override init() {
-        mobileAds = .sharedInstance()
+        mobileAds = .shared
         super.init()
-        
+
     }
 }
 
@@ -109,7 +109,7 @@ extension Ads: AdsType {
     /// Configure Ads
     ///
     /// - parameter viewController: The view controller that will present the consent alert if needed.
-    /// - parameter requestBuilder: The GADRequest builder.
+    /// - parameter requestBuilder: The Request builder.
     /// - parameter mediationConfigurator: Optional configurator to update mediation networks COPPA/GDPR consent status.
     /// - parameter consentStatusDidChange: A handler that will be called everytime the consent status has changed.
     /// - parameter completion: A completion handler that will return the current consent status after the initial consent flow has finished.
@@ -160,7 +160,7 @@ extension Ads: AdsType {
 //            /// If consent flow was skipped we need to update COPPA settings.
 //            updateCOPPA(for: configuration, mediationConfigurator: mediationConfigurator)
 //
-//            /// If consent flow was skipped we can start `GADMobileAds` and preload ads.
+//            /// If consent flow was skipped we can start `MobileAds` and preload ads.
             startMobileAdsSDK { [weak self] in
                 guard let self = self else { return }
                 self.loadAds()
@@ -218,7 +218,7 @@ extension Ads: AdsType {
                 self?.isDisabled ?? false
             },
             request: { [weak self] in
-                self?.requestBuilder?.build() ?? GADRequest()
+                self?.requestBuilder?.build() ?? Request()
             }
         )
         EventManager.shared.logEvent(title: AdsKey.event_ad_banner_load_start.rawValue)
@@ -332,27 +332,27 @@ extension Ads: AdsType {
     ///
     /// - parameter viewController: The view controller that will load the native ad.
     /// - parameter adUnitIdType: The adUnitId type for the ad, either plist or custom.
-    /// - parameter loaderOptions: The loader options for GADMultipleAdsAdLoaderOptions, single or multiple.
+    /// - parameter loaderOptions: The loader options for MultipleAdsAdLoaderOptions, single or multiple.
     /// - parameter onFinishLoading: An optional callback when the load request has finished.
     /// - parameter onError: An optional callback when an error has occurred.
-    /// - parameter onReceive: A callback when the GADNativeAd has been received.
+    /// - parameter onReceive: A callback when the NativeAd has been received.
     ///
     /// - Warning:
     /// Requests for multiple native ads don't currently work for AdMob ad unit IDs that have been configured for mediation.
-    /// Publishers using mediation should avoid using the GADMultipleAdsAdLoaderOptions class when making requests i.e. set loaderOptions parameter to .single.
+    /// Publishers using mediation should avoid using the MultipleAdsAdLoaderOptions class when making requests i.e. set loaderOptions parameter to .single.
     public func loadNativeAd(from viewController: UIViewController,
                              adUnitIdType: AdsAdUnitIdType,
                              loaderOptions: AdsNativeAdLoaderOptions,
                              onFinishLoading: (() -> Void)?,
                              onError: ((Error) -> Void)?,
-                             onReceive: @escaping (GADNativeAd) -> Void) {
+                             onReceive: @escaping (NativeAd) -> Void) {
         guard !isDisabled else { return }
 
         if nativeAd == nil, case .custom(let adUnitId) = adUnitIdType {
             nativeAd = AdsNative(
                 adUnitId: adUnitId,
                 request: { [weak self] in
-                    self?.requestBuilder?.build() ?? GADRequest()
+                    self?.requestBuilder?.build() ?? Request()
                 }
             )
         }

@@ -25,18 +25,18 @@ final class AdsRewarded: NSObject {
     // MARK: - Properties
 
     private let adUnitId: String
-    private let request: () -> GADRequest
+    private let request: () -> Request
     
     private var onOpen: (() -> Void)?
     private var onClose: (() -> Void)?
     private var onError: ((Error) -> Void)?
     
     private var isShowingRewardedAd = false
-    private var rewardedAd: GADRewardedAd?
+    private var rewardedAd: RewardedAd?
 
     // MARK: - Initialization
     
-    init(adUnitId: String, request: @escaping () -> GADRequest) {
+    init(adUnitId: String, request: @escaping () -> Request) {
         self.adUnitId = adUnitId
         self.request = request
     }
@@ -55,7 +55,7 @@ extension AdsRewarded: AdsRewardedType {
     
     func load() {
         EventManager.shared.logEvent(title: AdsKey.event_ad_rewarded_load_start.rawValue)
-        GADRewardedAd.load(withAdUnitID: adUnitId, request: request()) { [weak self] (ad, error) in
+        RewardedAd.load(with: adUnitId, request: request()) { [weak self] (ad, error) in
             guard let self = self else { return }
 
             if let error = error {
@@ -90,10 +90,10 @@ extension AdsRewarded: AdsRewardedType {
         }
 
         do {
-            try rewardedAd.canPresent(fromRootViewController: viewController)
+            try rewardedAd.canPresent(from: viewController)
             EventManager.shared.logEvent(title: AdsKey.event_ad_rewarded_shown.rawValue)
             let rewardAmount = rewardedAd.adReward.amount
-            rewardedAd.present(fromRootViewController: viewController, userDidEarnRewardHandler: {
+            rewardedAd.present(from: viewController, userDidEarnRewardHandler: {
                 onReward(rewardAmount)
             })
         } catch {
@@ -106,19 +106,19 @@ extension AdsRewarded: AdsRewardedType {
     }
 }
 
-// MARK: - GADFullScreenContentDelegate
+// MARK: - FullScreenContentDelegate
 
-extension AdsRewarded: GADFullScreenContentDelegate {
-    func adDidRecordImpression(_ ad: GADFullScreenPresentingAd) {
+extension AdsRewarded: FullScreenContentDelegate {
+    func adDidRecordImpression(_ ad: FullScreenPresentingAd) {
         print("AdsRewarded did record impression for ad: \(ad)")
     }
 
-    func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+    func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
         isShowingRewardedAd = true
         onOpen?()
     }
 
-    func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+    func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         // Nil out reference
         isShowingRewardedAd = false
         rewardedAd = nil
@@ -128,7 +128,7 @@ extension AdsRewarded: GADFullScreenContentDelegate {
         load()
     }
 
-    func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+    func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         EventManager.shared.logEvent(title: AdsKey.event_ad_rewarded_show_failed.rawValue)
         onError?(error)
     }

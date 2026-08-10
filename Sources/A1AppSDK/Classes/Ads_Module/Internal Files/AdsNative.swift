@@ -11,10 +11,10 @@ protocol AdsNativeType: AnyObject {
     func load(from viewController: UIViewController,
               adUnitIdType: AdsAdUnitIdType,
               loaderOptions: AdsNativeAdLoaderOptions,
-              adTypes: [GADAdLoaderAdType],
+              adTypes: [AdLoaderAdType],
               onFinishLoading: (() -> Void)?,
               onError: ((Error) -> Void)?,
-              onReceive: @escaping (GADNativeAd) -> Void)
+              onReceive: @escaping (NativeAd) -> Void)
     func stopLoading()
 }
 
@@ -23,17 +23,17 @@ final class AdsNative: NSObject {
     // MARK: - Properties
 
     private let adUnitId: String
-    private let request: () -> GADRequest
+    private let request: () -> Request
 
     private var onFinishLoading: (() -> Void)?
     private var onError: ((Error) -> Void)?
-    private var onReceive: ((GADNativeAd) -> Void)?
+    private var onReceive: ((NativeAd) -> Void)?
     
-    private var adLoader: GADAdLoader?
+    private var adLoader: AdLoader?
     
     // MARK: - Initialization
 
-    init(adUnitId: String, request: @escaping () -> GADRequest) {
+    init(adUnitId: String, request: @escaping () -> Request) {
         self.adUnitId = adUnitId
         self.request = request
     }
@@ -45,10 +45,10 @@ extension AdsNative: AdsNativeType {
     func load(from viewController: UIViewController,
               adUnitIdType: AdsAdUnitIdType,
               loaderOptions: AdsNativeAdLoaderOptions,
-              adTypes: [GADAdLoaderAdType],
+              adTypes: [AdLoaderAdType],
               onFinishLoading: (() -> Void)?,
               onError: ((Error) -> Void)?,
-              onReceive: @escaping (GADNativeAd) -> Void) {
+              onReceive: @escaping (NativeAd) -> Void) {
         self.onFinishLoading = onFinishLoading
         self.onError = onError
         self.onReceive = onReceive
@@ -57,12 +57,12 @@ extension AdsNative: AdsNativeType {
         if let adLoader = adLoader, adLoader.isLoading { return }
 
         // Create multiple ads ad loader options
-        var multipleAdsAdLoaderOptions: [GADMultipleAdsAdLoaderOptions]? {
+        var multipleAdsAdLoaderOptions: [MultipleAdsAdLoaderOptions]? {
             switch loaderOptions {
             case .single:
                 return nil
             case .multiple(let numberOfAds):
-                let options = GADMultipleAdsAdLoaderOptions()
+                let options = MultipleAdsAdLoaderOptions()
                 options.numberOfAds = numberOfAds
                 return [options]
             }
@@ -73,15 +73,15 @@ extension AdsNative: AdsNativeType {
             return self.adUnitId
         }
 
-        // Create GADAdLoader
-        adLoader = GADAdLoader(
+        // Create AdLoader
+        adLoader = AdLoader(
             adUnitID: adUnitId,
             rootViewController: viewController,
             adTypes: adTypes,
             options: multipleAdsAdLoaderOptions
         )
 
-        // Set the GADAdLoader delegate
+        // Set the AdLoader delegate
         adLoader?.delegate = self
 
         // Load ad with request
@@ -94,18 +94,18 @@ extension AdsNative: AdsNativeType {
     }
 }
 
-// MARK: - GADNativeAdLoaderDelegate
+// MARK: - NativeAdLoaderDelegate
 
-extension AdsNative: GADNativeAdLoaderDelegate {
-    func adLoader(_ adLoader: GADAdLoader, didReceive nativeAd: GADNativeAd) {
+extension AdsNative: NativeAdLoaderDelegate {
+    func adLoader(_ adLoader: AdLoader, didReceive nativeAd: NativeAd) {
         onReceive?(nativeAd)
     }
 
-    func adLoaderDidFinishLoading(_ adLoader: GADAdLoader) {
+    func adLoaderDidFinishLoading(_ adLoader: AdLoader) {
         onFinishLoading?()
     }
 
-    func adLoader(_ adLoader: GADAdLoader, didFailToReceiveAdWithError error: Error) {
+    func adLoader(_ adLoader: AdLoader, didFailToReceiveAdWithError error: Error) {
         onError?(error)
     }
 }

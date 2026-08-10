@@ -165,8 +165,8 @@ public class AdsHandler {
     
 }
 private final class AdsRequestBuilder: AdsRequestBuilderType {
-    func build() -> GADRequest {
-        GADRequest()
+    func build() -> GoogleMobileAds.Request {
+        GoogleMobileAds.Request()
     }
 }
 extension Notification.Name {

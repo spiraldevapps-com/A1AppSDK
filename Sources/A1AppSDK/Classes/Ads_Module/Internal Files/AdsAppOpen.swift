@@ -24,10 +24,10 @@ protocol AdsAppOpenType: AnyObject {
 
 final class AppOpenAdManager: NSObject {
     private let adUnitId: String
-    private let request: () -> GADRequest
+    private let request: () -> Request
 
   /// The app open ad.
-  private var appOpenAd: GADAppOpenAd?
+  private var appOpenAd: AppOpenAd?
   /// Maintains a reference to the delegate.
   /// Keeps track of if an app open ad is loading.
   var isLoadingAd = false
@@ -44,7 +44,7 @@ final class AppOpenAdManager: NSObject {
 
   //static let shared = AppOpenAdManager()
     
-    init(adUnitId: String, request: @escaping () -> GADRequest) {
+    init(adUnitId: String, request: @escaping () -> Request) {
         self.adUnitId = adUnitId
         self.request = request
     }
@@ -62,7 +62,7 @@ final class AppOpenAdManager: NSObject {
       EventManager.shared.logEvent(title: AdsKey.event_ad_appopen_load_start.rawValue)
     isLoadingAd = true
     print("Start loading app open ad.")
-    GADAppOpenAd.load(withAdUnitID: adUnitId, request: request()) { [weak self] (ad, error) in
+    AppOpenAd.load(with: adUnitId, request: request()) { [weak self] (ad, error) in
         guard let self else {return}
         self.isLoadingAd = false
       if let error = error {
@@ -80,7 +80,7 @@ final class AppOpenAdManager: NSObject {
         if self.showAdAfterLoad, let ads = self.appOpenAd, let viewController = self.viewController {
             self.isShowingAd = true
             self.showAdAfterLoad = false
-            ads.present(fromRootViewController: viewController)
+            ads.present(from: viewController)
             EventManager.shared.logEvent(title: AdsKey.event_ad_appopen_shown.rawValue)
             self.viewController = nil
         }
@@ -116,20 +116,20 @@ final class AppOpenAdManager: NSObject {
       isShowingAd = true
     self.showAdAfterLoad = false
         EventManager.shared.logEvent(title: AdsKey.event_ad_appopen_shown.rawValue)
-      ad.present(fromRootViewController: viewController)
+      ad.present(from: viewController)
     }
   }
 }
 
-// MARK: - GADFullScreenContentDelegate
+// MARK: - FullScreenContentDelegate
 
-extension AppOpenAdManager: GADFullScreenContentDelegate {
-  func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+extension AppOpenAdManager: FullScreenContentDelegate {
+  func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
     print("App open ad is will be presented.")
     onOpen?()
   }
 
-  func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+  func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
     appOpenAd = nil
     isShowingAd = false
     print("App open ad was dismissed.")
@@ -141,7 +141,7 @@ extension AppOpenAdManager: GADFullScreenContentDelegate {
   }
 
   func ad(
-    _ ad: GADFullScreenPresentingAd,
+    _ ad: FullScreenPresentingAd,
     didFailToPresentFullScreenContentWithError error: Error
   ) {
       //appOpenAd = nil

@@ -25,18 +25,18 @@ final class AdsInterstitial: NSObject {
     // MARK: - Properties
 
     private let adUnitId: String
-    private let request: () -> GADRequest
+    private let request: () -> Request
     
     private var onOpen: (() -> Void)?
     private var onClose: (() -> Void)?
     private var onError: ((Error) -> Void)?
     
-    private var interstitialAd: GADInterstitialAd?
+    private var interstitialAd: InterstitialAd?
     private var isShowingInterAd = false
 
     // MARK: - Initialization
     
-    init(adUnitId: String, request: @escaping () -> GADRequest) {
+    init(adUnitId: String, request: @escaping () -> Request) {
         self.adUnitId = adUnitId
         self.request = request
     }
@@ -55,7 +55,7 @@ extension AdsInterstitial: AdsInterstitialType {
     
     func load() {
         EventManager.shared.logEvent(title: AdsKey.event_ad_inter_load_start.rawValue)
-        GADInterstitialAd.load(withAdUnitID: adUnitId, request: request()) { [weak self] (ad, error) in
+        InterstitialAd.load(with: adUnitId, request: request()) { [weak self] (ad, error) in
             guard let self = self else { return }
 
             if let error = error {
@@ -92,9 +92,9 @@ extension AdsInterstitial: AdsInterstitialType {
         }
 
         do {
-            try interstitialAd.canPresent(fromRootViewController: viewController)
+            try interstitialAd.canPresent(from: viewController)
             EventManager.shared.logEvent(title: AdsKey.event_ad_inter_shown.rawValue)
-            interstitialAd.present(fromRootViewController: viewController)
+            interstitialAd.present(from: viewController)
         } catch {
             load()
             EventManager.shared.logEvent(title: AdsKey.event_ad_inter_show_failed.rawValue)
@@ -104,19 +104,19 @@ extension AdsInterstitial: AdsInterstitialType {
     }
 }
 
-// MARK: - GADFullScreenContentDelegate
+// MARK: - FullScreenContentDelegate
 
-extension AdsInterstitial: GADFullScreenContentDelegate {
-    func adDidRecordImpression(_ ad: GADFullScreenPresentingAd) {
+extension AdsInterstitial: FullScreenContentDelegate {
+    func adDidRecordImpression(_ ad: FullScreenPresentingAd) {
         print("AdsInterstitial did record impression for ad: \(ad)")
     }
 
-    func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+    func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
         isShowingInterAd = true
         onOpen?()
     }
 
-    func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+    func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         // Nil out reference
         interstitialAd = nil
         isShowingInterAd = false
@@ -127,7 +127,7 @@ extension AdsInterstitial: GADFullScreenContentDelegate {
         load()
     }
 
-    func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+    func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         EventManager.shared.logEvent(title: AdsKey.event_ad_inter_show_failed.rawValue)
         EventManager.shared.logEvent(title: AppErrorKey.event_ad_error_show_failed.rawValue, key: "error", value: error.localizedDescription)
         onError?(error)
