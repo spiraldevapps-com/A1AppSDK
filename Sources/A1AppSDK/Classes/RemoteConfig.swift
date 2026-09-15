@@ -67,23 +67,18 @@ public struct AdsConfiguration: Codable {
 
     }
     
+    /// Fallback used before Remote Config resolves. Every switch is deliberately false and the
+    /// unit IDs are Google's public test units — do not swap them for production IDs.
     public init() {
-        interInterval = 10
-        adsEnabled = false
-        interEnabled = false
-        interID = "ca-app-pub-3940256099942544/4411468910"
-        appOpenEnabled = false
-        appOpenID = "ca-app-pub-3940256099942544/9257395921"
-        bannerEnabled = false
-        bannerID = "ca-app-pub-3940256099942544/2934735716"
-        appOpenInterval = 10
-        appOpenInterInterval = 10
-        interClickInterval = 2
-        rewardedEnabled = false
-        rewardedID = "ca-app-pub-3940256099942544/1712485313"
+        self.init(interInterval: 10, adsEnabled: false, interEnabled: false,
+                  interID: "ca-app-pub-3940256099942544/4411468910",
+                  appOpenEnabled: false, appOpenID: "ca-app-pub-3940256099942544/9257395921",
+                  bannerEnabled: false, bannerID: "ca-app-pub-3940256099942544/2934735716",
+                  appOpenInterval: 10, appOpenInterInterval: 10, interClickInterval: 2,
+                  rewardedEnabled: false, rewardedID: "ca-app-pub-3940256099942544/1712485313",
+                  nativeID: "ca-app-pub-3940256099942544/3986624511", nativeEnabled: false)
+        // The initialiser below takes no `rewardedInterstitialID`, so it is set here.
         rewardedInterstitialID = "ca-app-pub-3940256099942544/6978759866"
-        nativeID = "ca-app-pub-3940256099942544/3986624511"
-        nativeEnabled = false
     }
     
     public init(interInterval: Int, adsEnabled: Bool, interEnabled: Bool, interID: String, appOpenEnabled: Bool , appOpenID: String, bannerEnabled: Bool, bannerID: String, appOpenInterval: Int, appOpenInterInterval: Int, interClickInterval: Int, rewardedEnabled: Bool, rewardedID: String, nativeID: String, nativeEnabled: Bool) {

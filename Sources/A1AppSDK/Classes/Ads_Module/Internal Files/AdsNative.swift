@@ -56,36 +56,25 @@ extension AdsNative: AdsNativeType {
         // If AdLoader is already loading we should not make another request
         if let adLoader = adLoader, adLoader.isLoading { return }
 
-        // Create multiple ads ad loader options
-        var multipleAdsAdLoaderOptions: [GADMultipleAdsAdLoaderOptions]? {
-            switch loaderOptions {
-            case .single:
-                return nil
-            case .multiple(let numberOfAds):
-                let options = GADMultipleAdsAdLoaderOptions()
-                options.numberOfAds = numberOfAds
-                return [options]
-            }
+        let options: [GADMultipleAdsAdLoaderOptions]?
+        switch loaderOptions {
+        case .single:
+            options = nil
+        case .multiple(let numberOfAds):
+            let multipleAds = GADMultipleAdsAdLoaderOptions()
+            multipleAds.numberOfAds = numberOfAds
+            options = [multipleAds]
         }
 
-        // Set the ad unit id
-        var adUnitId: String {
-            return self.adUnitId
-        }
-
-        // Create GADAdLoader
-        adLoader = GADAdLoader(
+        let loader = GADAdLoader(
             adUnitID: adUnitId,
             rootViewController: viewController,
             adTypes: adTypes,
-            options: multipleAdsAdLoaderOptions
+            options: options
         )
-
-        // Set the GADAdLoader delegate
-        adLoader?.delegate = self
-
-        // Load ad with request
-        adLoader?.load(request())
+        adLoader = loader
+        loader.delegate = self
+        loader.load(request())
     }
 
     func stopLoading() {

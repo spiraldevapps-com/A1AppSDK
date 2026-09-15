@@ -6,12 +6,9 @@
 //
 
 import Foundation
-import UIKit
 import FBSDKCoreKit
 import FirebaseAnalytics
-import FirebaseCore
 import AppMetricaCore
-import AppMetricaCrashes
 
 public enum PurchaselyKey: String {
     
@@ -94,70 +91,74 @@ public class EventManager: NSObject {
     private var appMetricaKey = ""
     private var firebase = true
     private var facebook = true
-    
+
     public func configureEventManager(appMetricaKey: String = "",userId: String = "", firebase: Bool = true, facebook: Bool = true) {
         self.appMetricaKey = appMetricaKey
         self.firebase = firebase
         self.facebook = facebook
+        // Failable: a malformed key returns nil, and force-unwrapping it crashed on launch.
+        guard !appMetricaKey.isEmpty,
+              let configuration = AppMetricaConfiguration(apiKey: appMetricaKey) else { return }
+        configuration.userProfileID = userId
+        configuration.areLogsEnabled = true
+        AppMetrica.activate(with: configuration)
+    }
+
+    /// Meta keys its parameters by `ParameterName`. Built with `uniquingKeysWith:` instead of
+    /// `uniqueKeysWithValues:` — the latter traps at runtime if two keys collapse to the same
+    /// ParameterName. No event name or value changes.
+    private static func metaParameters(_ params: [String: Any]) -> [AppEvents.ParameterName: Any] {
+        Dictionary(params.map { (AppEvents.ParameterName($0.key), $0.value) },
+                   uniquingKeysWith: { _, latest in latest })
+    }
+
+    /// Shared fan-out for the entry points that always carry parameters. The order —
+    /// AppMetrica, then Firebase, then Meta — is what the dashboards have always received.
+    private func fanOut(_ title: String, _ parameters: [String: Any]) {
         if !appMetricaKey.isEmpty {
-            let configuration = AppMetricaConfiguration(apiKey: appMetricaKey)
-            configuration?.userProfileID = userId
-            configuration?.areLogsEnabled = true
-            AppMetrica.activate(with: configuration!)
+            AppMetrica.reportEvent(name: title, parameters: parameters)
+        }
+        if firebase {
+            Analytics.logEvent(title, parameters: parameters)
+        }
+        if facebook {
+            AppEvents.shared.logEvent(AppEvents.Name(title), parameters: Self.metaParameters(parameters))
         }
     }
 
     public func logEvent(title: String, key: String, value: String) {
-        if !appMetricaKey.isEmpty {
-            AppMetrica.reportEvent(name: title, parameters: [key : value])
-        }
-        if firebase {
-            Analytics.logEvent(title, parameters: [key: value])
-        }
-        if facebook {
-            AppEvents.shared.logEvent(AppEvents.Name(title), parameters: [AppEvents.ParameterName(key): value])
-        }
+        fanOut(title, [key: value])
     }
 
     public func logEvent(title: String, params: [String: Any]? = nil) {
-        if !appMetricaKey.isEmpty {
-            AppMetrica.reportEvent(name: title, parameters: params)
+        // The ad and update modules log through this legacy entry point from ~36 call sites.
+        // When A1SDK is running it owns the sinks, so forward rather than fan out twice.
+        if A1SDK.shared.isConfigured {
+            A1SDK.shared.analytics.log(A1Event(title, parameters: params))
+            return
         }
-        if firebase {
-            Analytics.logEvent(title, parameters: params)
-        }
-        if facebook {
-            if let myparams = params {
-                let appEventsParams = myparams.map { key, value in
-                    (AppEvents.ParameterName(key), value)
-                }
-                let parameters = Dictionary(uniqueKeysWithValues: appEventsParams)
-                AppEvents.shared.logEvent(AppEvents.Name(title), parameters: parameters)
-            } else {
+        guard let params else {
+            if !appMetricaKey.isEmpty {
+                AppMetrica.reportEvent(name: title, parameters: nil)
+            }
+            if firebase {
+                Analytics.logEvent(title, parameters: nil)
+            }
+            if facebook {
                 AppEvents.shared.logEvent(AppEvents.Name(title), parameters: nil)
             }
+            return
         }
+        fanOut(title, params)
     }
-    
+
     public func logProOpenedEvent(title: String, from: String) {
-        if !appMetricaKey.isEmpty {
-            AppMetrica.reportEvent(name: title, parameters: [proOpenFromKey: from])
-        }
-        if firebase {
-            Analytics.logEvent(title, parameters: [proOpenFromKey: from])
-        }
-        if facebook {
-            AppEvents.shared.logEvent(AppEvents.Name(title), parameters: [AppEvents.ParameterName(proOpenFromKey): from])
-        }
+        fanOut(title, [proOpenFromKey: from])
     }
 
     public func logFacebookEvent(name: String, params: [String: String]) {
         if facebook {
-            let appEventsParams = params.map { key, value in
-                (AppEvents.ParameterName(key), value)
-            }
-            let parameters = Dictionary(uniqueKeysWithValues: appEventsParams)
-            AppEvents.shared.logEvent(AppEvents.Name(name), parameters: parameters)
+            AppEvents.shared.logEvent(AppEvents.Name(name), parameters: Self.metaParameters(params))
         }
         //Add same events for google as well
         if firebase {
@@ -166,17 +167,8 @@ public class EventManager: NSObject {
     }
 
     public func logEvent(title: String, keys: [String] = [], values: [String] = []) {
-        let params = setParam(keys: keys, values: values)
+        // `zip` stops at the shorter side: a keys/values length mismatch used to trap here.
+        let params: [String: String] = Dictionary(zip(keys, values), uniquingKeysWith: { _, latest in latest })
         logEvent(title: title, params: params)
     }
-    
-    private func setParam(keys: [String], values: [String]) -> [String: String] {
-        var params: [String: String] = [:]
-        for (index, key) in keys.enumerated() {
-            params.updateValue(values[index], forKey: key)
-        }
-        return params
-    }
-
-    
 }

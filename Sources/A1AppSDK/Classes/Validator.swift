@@ -15,7 +15,7 @@ public struct Validator {
     }
     
     public static func sayHello() {
-        print("Hello pretty lady. How are you doing????")
+        print("Hello, How are you doing????")
     }
     
 }

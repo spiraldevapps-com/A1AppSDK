@@ -37,7 +37,6 @@ public final class Ads: NSObject {
     private override init() {
         mobileAds = .sharedInstance()
         super.init()
-        
     }
 }
 
@@ -108,76 +107,44 @@ extension Ads: AdsType {
     
     /// Configure Ads
     ///
-    /// - parameter viewController: The view controller that will present the consent alert if needed.
+    /// - parameter adConfig: The remote ad configuration (unit ids and per-format switches).
     /// - parameter requestBuilder: The GADRequest builder.
-    /// - parameter mediationConfigurator: Optional configurator to update mediation networks COPPA/GDPR consent status.
-    /// - parameter consentStatusDidChange: A handler that will be called everytime the consent status has changed.
-    /// - parameter completion: A completion handler that will return the current consent status after the initial consent flow has finished.
     ///
-    /// - Warning:
-    /// Returns .notRequired in the completion handler if consent has been disabled via Ads.plist isUMPDisabled entry.
+    /// - Note:
+    /// The UMP consent flow is handled ahead of this call by `ConsentManager`, so the Mobile Ads
+    /// SDK is started unconditionally here.
     public func configure(from adConfig: AdsConfiguration,
                           requestBuilder: AdsRequestBuilderType
                           ) {
-        let configuration: AdsConfiguration
         configuration = adConfig
-        self.configuration = configuration
         self.requestBuilder = requestBuilder
 
-         // Create ads
-        let appOpenAdUnitId = configuration.appOpenID
-        if appOpenAdUnitId != "" && configuration.appOpenEnabled {
-            let appOpenAdUnitId = configuration.appOpenID
-            appOpenAd = AppOpenAdManager(
-                adUnitId: appOpenAdUnitId,
-                request: requestBuilder.build
-            )
+        // Create ads. The bound `build` method is formed once and shared by every format
+        // instead of being re-created per construction.
+        let request = requestBuilder.build
+        if !adConfig.appOpenID.isEmpty, adConfig.appOpenEnabled {
+            appOpenAd = AppOpenAdManager(adUnitId: adConfig.appOpenID, request: request)
         }
-        let interstitialAdUnitId = configuration.interID
-        if interstitialAdUnitId != "" && configuration.interEnabled {
-            interstitialAd = AdsInterstitial(
-                adUnitId: interstitialAdUnitId,
-                request: requestBuilder.build
-            )
+        if !adConfig.interID.isEmpty, adConfig.interEnabled {
+            interstitialAd = AdsInterstitial(adUnitId: adConfig.interID, request: request)
         }
-        let rewardedInterstitialAdUnitId = configuration.rewardedInterstitialID
-        if rewardedInterstitialAdUnitId != "" {
-            rewardedInterstitialAd = AdsRewardedInterstitial(
-                adUnitId: rewardedInterstitialAdUnitId,
-                request: requestBuilder.build
-            )
+        if !adConfig.rewardedInterstitialID.isEmpty {
+            rewardedInterstitialAd = AdsRewardedInterstitial(adUnitId: adConfig.rewardedInterstitialID, request: request)
         }
-        let nativeAdUnitId = configuration.nativeID
-        if nativeAdUnitId != ""  && configuration.nativeEnabled {
-            nativeAd = AdsNative(
-                adUnitId: nativeAdUnitId,
-                request: requestBuilder.build
-            )
+        if !adConfig.nativeID.isEmpty, adConfig.nativeEnabled {
+            nativeAd = AdsNative(adUnitId: adConfig.nativeID, request: request)
         }
 
-        // If UMP SDK is disabled skip consent flow completely
-//        if let isUMPDisabled = configuration.isUMPDisabled, isUMPDisabled {
-//            /// If consent flow was skipped we need to update COPPA settings.
-//            updateCOPPA(for: configuration, mediationConfigurator: mediationConfigurator)
-//
-//            /// If consent flow was skipped we can start `GADMobileAds` and preload ads.
-            startMobileAdsSDK { [weak self] in
-                guard let self = self else { return }
-                self.loadAds()
-            }
-    }
-    
-    public func configureRewardedAds() {
-        let rewardedAdUnitId = configuration?.rewardedID; let enabled = configuration?.appOpenEnabled ?? false
-        if let rewardedAdUnitId = rewardedAdUnitId, let requestBuilder =  self.requestBuilder {
-            if enabled {
-                rewardedAd = AdsRewarded(
-                    adUnitId: rewardedAdUnitId,
-                    request: requestBuilder.build
-                )
-                rewardedAd?.load()
-            }
+        startMobileAdsSDK { [weak self] in
+            self?.loadAds()
         }
+    }
+
+    public func configureRewardedAds() {
+        // Gated on `appOpenEnabled` rather than `rewardedEnabled` — preserved exactly as shipped.
+        guard let config = configuration, config.appOpenEnabled, let builder = requestBuilder else { return }
+        rewardedAd = AdsRewarded(adUnitId: config.rewardedID, request: builder.build)
+        rewardedAd?.load()
     }
 
     // MARK: Banner Ads
@@ -204,11 +171,7 @@ extension Ads: AdsType {
                              onDidDismissScreen: (() -> Void)?) -> (AdsBannerType, UIView)? {
         guard !isDisabled else { return nil }
 
-        var adUnitId: String? {
-            configuration?.bannerID
-        }
-
-        guard let validAdUnitId = adUnitId else {
+        guard let validAdUnitId = configuration?.bannerID else {
             onError?(AdsError.bannerAdMissingAdUnitId)
             return nil
         }
@@ -248,7 +211,8 @@ extension Ads: AdsType {
 
     // MARK: Interstitial Ads
     
-//    / Show interstitial ad
+    /// Show interstitial ad
+    ///
     /// - parameter viewController: The view controller that will present the ad.
     /// - parameter onOpen: An optional callback when the ad was presented.
     /// - parameter onClose: An optional callback when the ad was dismissed.
@@ -286,8 +250,6 @@ extension Ads: AdsType {
                                onError: ((Error) -> Void)?,
                                onNotReady: (() -> Void)?,
                                onReward: @escaping (NSDecimalNumber) -> Void) {
-//        guard hasConsent else { return }
-
         rewardedAd?.show(
             from: viewController,
             onOpen: onOpen,
@@ -401,7 +363,10 @@ private extension Ads {
          Ads SDK.
         */
         mobileAds.start { initializationStatus in
+            #if DEBUG
+            // Building the adapter-status dictionary is not free; keep it out of release builds.
             print("Ads initialization status", initializationStatus.adapterStatusesByClassName)
+            #endif
             completion()
         }
     }

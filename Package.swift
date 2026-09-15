@@ -23,7 +23,8 @@ let package = Package(
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
         .package(url: "https://github.com/microsoft/clarity-apps", exact: "3.5.4"),
-        .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.7.1")
+        .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.7.1"),
+        .package(url: "https://github.com/adaptyteam/AdaptySDK-iOS.git", exact: "3.15.7")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -70,6 +71,10 @@ let package = Package(
                 
                 // MARK: - Clarity.
                 .product(name: "Clarity", package: "clarity-apps"),
+                
+                // MARK: - Adapty.
+                .product(name: "Adapty", package: "AdaptySDK-iOS"),
+                .product(name: "AdaptyUI", package: "AdaptySDK-iOS"),
                 
             ], path: "Sources"),
     ]

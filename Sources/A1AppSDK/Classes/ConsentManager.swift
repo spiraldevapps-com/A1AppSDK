@@ -18,15 +18,17 @@ public class ConsentManager {
     
     /// Helper method to call the UMP SDK methods to request consent information and load/present a
     /// consent form if necessary.
-    public func gatherConsent() {
+    public func gatherConsent(completion: (() -> Void)? = nil) {
         let parameters = UMPRequestParameters()
         // Requesting an update to consent information should be called on every app launch.
         UMPConsentInformation.sharedInstance.requestConsentInfoUpdate(with: parameters) {
             requestConsentError in
-            guard requestConsentError == nil else {
-                return
+            if requestConsentError == nil {
+                EventManager.shared.logEvent(title: GDPRKeys.event_app_home_gdpr_form_loaded.rawValue)
             }
-            EventManager.shared.logEvent(title: GDPRKeys.event_app_home_gdpr_form_loaded.rawValue)
+            // Always signal, success or failure — ads must not be blocked forever on a
+            // network error, and callers gate their own loading on this.
+            completion?()
         }
     }
     
