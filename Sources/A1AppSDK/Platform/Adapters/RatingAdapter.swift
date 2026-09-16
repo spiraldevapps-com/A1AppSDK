@@ -52,10 +52,11 @@ public final class RatingAdapter: A1Module {
     private var lastInterruption = Date.distantPast
     private var analytics: AnalyticsProvider?
 
-    public init() {}
+    public init(policy: Policy = Policy()) { storedPolicy = policy }
 
     /// Current thresholds. Read-modify-write to tune one value:
-    /// `adapter.policy.minimumSessions = 5`.
+    /// `adapter.policy.minimumSessions = 5`. Survives boot: `configure` layers any
+    /// `A1Configuration.custom` keys on top of it rather than replacing it.
     public var policy: Policy {
         get { lock.lock(); defer { lock.unlock() }; return storedPolicy }
         set { lock.lock(); storedPolicy = newValue; lock.unlock() }
@@ -66,7 +67,7 @@ public final class RatingAdapter: A1Module {
     public func configure(context: A1ModuleContext) {
         analytics = context.analytics
 
-        var policy = Policy()
+        var policy = self.policy
         // NSNumber bridging so an app may pass either an Int or a Double.
         func value(_ key: String) -> Double? {
             (context.configuration.custom[key] as? NSNumber)?.doubleValue
@@ -106,14 +107,29 @@ public final class RatingAdapter: A1Module {
     }
 
     /// Ask for a review if the policy allows it. Safe to call from anywhere, as often as you like.
+    /// Prompt only if the pacing policy allows. For prompts the APP initiates.
     public func requestReviewIfAppropriate(reason: String) {
+        request(reason: reason, enforcingPolicy: true)
+    }
+
+    /// Prompt now, skipping the pacing policy. For requests the USER initiates.
+    ///
+    /// The policy exists to stop the app spending Apple's ~3-prompts-a-year budget on
+    /// moments the user did not ask for. When the user has just tapped a star rating, the
+    /// request is theirs — gating it makes the tap do nothing. Apple still applies its own
+    /// rate limit, so this cannot over-prompt.
+    public func requestReview(reason: String) {
+        request(reason: reason, enforcingPolicy: false)
+    }
+
+    private func request(reason: String, enforcingPolicy: Bool) {
         guard Thread.isMainThread else {
-            DispatchQueue.main.async { [weak self] in self?.requestReviewIfAppropriate(reason: reason) }
+            DispatchQueue.main.async { [weak self] in self?.request(reason: reason, enforcingPolicy: enforcingPolicy) }
             return
         }
 
         lock.lock()
-        guard isEligible else { lock.unlock(); return }
+        if enforcingPolicy, !isEligible { lock.unlock(); return }
         let sessions = defaults.integer(forKey: Key.sessions)
         lock.unlock()
 
@@ -129,8 +145,10 @@ public final class RatingAdapter: A1Module {
         lock.unlock()
 
         SKStoreReviewController.requestReview(in: scene)
-        analytics?.log(A1Event("rating_prompt_requested",
-                               parameters: ["reason": reason, "sessions": "\(sessions)"]))
+        analytics?.log(A1Event(.rating_prompt_requested,
+                               parameters: ["reason": reason,
+                                            "sessions": "\(sessions)",
+                                            "policy_enforced": "\(enforcingPolicy)"]))
     }
 
     // MARK: - Policy evaluation

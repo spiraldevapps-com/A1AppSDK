@@ -50,7 +50,9 @@ public struct A1TraceHandle {
 
 public final class PerformanceAdapter: A1Module {
 
-    public var phase: A1BootPhase { .analytics }
+    /// Immediately after Firebase core, ahead of every other module, so the boot trace it
+    /// opens covers the whole launch rather than starting at the analytics phase.
+    public var phase: A1BootPhase { .custom(after: .bootstrap) }
 
     private let lock = NSLock()
     /// Traces not yet stopped. A handle is a value and can be copied, so the same trace can
@@ -64,6 +66,10 @@ public final class PerformanceAdapter: A1Module {
     private var analytics: AnalyticsProvider?
 
     public init() {}
+
+    /// Name of the launch trace every app gets for free. SDK-namespaced.
+    public static let bootTraceName = "a1sdk_boot"
+    private var bootTrace: A1TraceHandle?
 
     public func configure(context: A1ModuleContext) {
         analytics = context.analytics
@@ -80,6 +86,25 @@ public final class PerformanceAdapter: A1Module {
         } else {
             isEnabled = Performance.sharedInstance().isDataCollectionEnabled
         }
+
+        // Opened as early as a trace legally can be (this module boots second, right after
+        // FirebaseCore). A1SDK closes it once boot completes and attaches per-module timings.
+        bootTrace = startTrace(Self.bootTraceName)
+    }
+
+    // MARK: - Boot trace (driven by A1SDK)
+
+    /// One metric per module: how long its `configure(context:)` took.
+    func recordBootModule(_ identifier: String, milliseconds: Int64) {
+        bootTrace?.setValue(milliseconds, forCounter: "\(identifier)_ms")
+    }
+
+    /// Close the launch trace with the end-to-end figure.
+    func finishBootTrace(totalMilliseconds: Int64) {
+        guard let trace = bootTrace else { return }
+        trace.setValue(totalMilliseconds, forCounter: "total_ms")
+        stop(trace)
+        bootTrace = nil
     }
 
     // MARK: - Traces
@@ -91,7 +116,7 @@ public final class PerformanceAdapter: A1Module {
         guard let trace = Performance.startTrace(name: name) else {
             // Worth knowing: the measurement vanished silently, which is exactly how the
             // legacy manager sat fully commented out for months without anyone noticing.
-            analytics?.reportError("a1sdk_performance_trace_rejected",
+            analytics?.reportError(.performance_trace_rejected,
                                    message: "Firebase refused a trace named '\(name)'",
                                    parameters: nil)
             return nil

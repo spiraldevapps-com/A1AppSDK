@@ -46,6 +46,7 @@ public final class AdMobAdapter: A1Module, AdsProvider {
     /// A `setDisabled(_:)` that arrived before boot, replayed once the handler exists.
     private var pendingDisabled: Bool?
     private var entitlementToken: A1ObservationToken?
+    private var consentToken: A1ObservationToken?
     private var analytics: AnalyticsProvider?
 
     public init() {}
@@ -61,9 +62,19 @@ public final class AdMobAdapter: A1Module, AdsProvider {
             Ads.shared.setDisabled(pending)
         }
 
+        // Consent decides when Mobile Ads may start, and resolves again after the form:
+        // every resolution re-applies the last configuration, which is how ads come back
+        // once an EEA user has answered.
+        var appliedOnSubscribe = false
+        consentToken = A1SDK.shared.module(ConsentAdapter.self)?.observeResolution { [weak self] in
+            appliedOnSubscribe = true
+            self?.applyNow()
+        }
+
         // A host that supplied a configuration before `A1SDK.configure(with:)` ran had it
-        // held rather than applied; apply it now, through the same consent gate.
-        if lastConfiguration != nil { applyConfiguration() }
+        // held rather than applied; apply it now, through the same consent gate — unless
+        // consent was already resolved and the observer just did (module registered late).
+        if lastConfiguration != nil, !appliedOnSubscribe { applyConfiguration() }
 
         // Monetization boots at an earlier phase, so the subscription provider already
         // exists here. This replaces the hand-written setPro()/removePro() plumbing each
@@ -84,9 +95,10 @@ public final class AdMobAdapter: A1Module, AdsProvider {
 
     private func applyEntitlement(_ isPro: Bool) {
         self.isPro = isPro
-        // Nothing to re-apply until the app has supplied a remote config.
-        guard let configuration = lastConfiguration, let handler = resolvedHandler else { return }
-        handler.configureAds(config: configuration, pro: isPro)
+        // Same consent gate as a fresh configuration: an entitlement flip must never be the
+        // path that starts Mobile Ads before UMP has answered. No-op until the app has
+        // supplied a remote config.
+        applyConfiguration()
     }
 
     // MARK: - AdsProvider
@@ -102,20 +114,16 @@ public final class AdMobAdapter: A1Module, AdsProvider {
     }
 
     private func applyConfiguration() {
-        guard let configuration = lastConfiguration, let handler = resolvedHandler else { return }
-
         // Never start the Mobile Ads SDK before consent has been resolved: it begins
         // preloading as soon as it starts, which is exactly what UMP exists to prevent.
-        guard let consent = A1SDK.shared.module(ConsentAdapter.self) else {
-            handler.configureAds(config: configuration, pro: isPro)
-            return
-        }
-        consent.whenResolved { [weak self] in
-            guard let self,
-                  let config = self.lastConfiguration,
-                  let handler = self.resolvedHandler else { return }
-            handler.configureAds(config: config, pro: self.isPro)
-        }
+        // The consent observer applies the configuration the moment that happens.
+        if let consent = A1SDK.shared.module(ConsentAdapter.self), !consent.isResolved { return }
+        applyNow()
+    }
+
+    private func applyNow() {
+        guard let configuration = lastConfiguration, let handler = resolvedHandler else { return }
+        handler.configureAds(config: configuration, pro: isPro)
     }
 
     public func state(for format: A1AdFormat) -> A1AdState {

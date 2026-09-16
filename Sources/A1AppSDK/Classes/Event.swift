@@ -114,7 +114,14 @@ public class EventManager: NSObject {
 
     /// Shared fan-out for the entry points that always carry parameters. The order —
     /// AppMetrica, then Firebase, then Meta — is what the dashboards have always received.
-    private func fanOut(_ title: String, _ parameters: [String: Any]) {
+    private func fanOut(_ title: String, _ parameters: [String: Any]?) {
+        // Every legacy overload lands here. Once A1SDK is running it owns the sinks, so forward
+        // rather than fan out twice — previously only one overload did this, and the ad
+        // error-detail events (key/value overload) silently skipped AppMetrica.
+        if A1SDK.shared.isConfigured {
+            A1SDK.shared.analytics.log(A1Event(title, parameters: parameters))
+            return
+        }
         if !appMetricaKey.isEmpty {
             AppMetrica.reportEvent(name: title, parameters: parameters)
         }
@@ -122,7 +129,7 @@ public class EventManager: NSObject {
             Analytics.logEvent(title, parameters: parameters)
         }
         if facebook {
-            AppEvents.shared.logEvent(AppEvents.Name(title), parameters: Self.metaParameters(parameters))
+            AppEvents.shared.logEvent(AppEvents.Name(title), parameters: parameters.map(Self.metaParameters))
         }
     }
 
@@ -131,24 +138,6 @@ public class EventManager: NSObject {
     }
 
     public func logEvent(title: String, params: [String: Any]? = nil) {
-        // The ad and update modules log through this legacy entry point from ~36 call sites.
-        // When A1SDK is running it owns the sinks, so forward rather than fan out twice.
-        if A1SDK.shared.isConfigured {
-            A1SDK.shared.analytics.log(A1Event(title, parameters: params))
-            return
-        }
-        guard let params else {
-            if !appMetricaKey.isEmpty {
-                AppMetrica.reportEvent(name: title, parameters: nil)
-            }
-            if firebase {
-                Analytics.logEvent(title, parameters: nil)
-            }
-            if facebook {
-                AppEvents.shared.logEvent(AppEvents.Name(title), parameters: nil)
-            }
-            return
-        }
         fanOut(title, params)
     }
 

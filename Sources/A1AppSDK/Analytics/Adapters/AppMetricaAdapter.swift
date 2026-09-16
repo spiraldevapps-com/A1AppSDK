@@ -10,7 +10,10 @@ import AppMetricaCrashes
 /// AppMetrica event sink and non-fatal error reporter.
 public final class AppMetricaAdapter: A1Module, AnalyticsProvider {
 
-    public var phase: A1BootPhase { .analytics }
+    /// Right after Firebase core — its only hard dependency. Identity is not one: the sink
+    /// re-identifies through the broadcast. Booting here means boot-time events are delivered
+    /// live rather than replayed from the buffer at .analytics.
+    public var phase: A1BootPhase { .custom(after: .bootstrap, offset: 2) }
     public var providerName: String { "AppMetrica" }
 
     private var isActive = false
@@ -25,7 +28,7 @@ public final class AppMetricaAdapter: A1Module, AnalyticsProvider {
         // The previous implementation force-unwrapped this initialiser, which crashes the app
         // on a malformed key. Failing soft and reporting is strictly safer.
         guard let configuration = AppMetricaConfiguration(apiKey: apiKey) else {
-            context.analytics.reportError("a1sdk_appmetrica_config_invalid",
+            context.analytics.reportError(.appmetrica_config_invalid,
                                           message: "AppMetricaConfiguration returned nil for the supplied key",
                                           parameters: nil)
             return
@@ -42,6 +45,9 @@ public final class AppMetricaAdapter: A1Module, AnalyticsProvider {
             self?.identify(userID: userID)
         }
     }
+
+    /// AppMetrica's device id, for cross-vendor attribution linking.
+    public var deviceID: String? { isActive ? AppMetrica.deviceID : nil }
 
     public func log(_ event: A1Event) {
         guard isActive else { return }

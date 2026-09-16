@@ -17,7 +17,17 @@ public final class MessagingAdapter: NSObject, A1Module, A1LifecycleObserving {
     public var phase: A1BootPhase { .notifications }
 
     /// Called when FCM issues or rotates a registration token.
-    public var onTokenRefresh: ((String) -> Void)?
+    ///
+    /// A token that arrived before this was assigned is delivered once on assignment, so a
+    /// handler wired later than launch still sees the current token.
+    public var onTokenRefresh: ((String) -> Void)? {
+        didSet {
+            guard let handler = onTokenRefresh, let token = undeliveredToken else { return }
+            undeliveredToken = nil
+            handler(token)
+        }
+    }
+    private var undeliveredToken: String?
 
     private var analytics: AnalyticsProvider?
 
@@ -39,7 +49,7 @@ public final class MessagingAdapter: NSObject, A1Module, A1LifecycleObserving {
         // Phase order normally guarantees Firebase is up by now, but a host app may register
         // a subset of modules. Degrade quietly rather than raising FIRAppNotConfigured.
         guard FirebaseApp.app() != nil else {
-            context.analytics.reportError("a1sdk_messaging_no_firebase",
+            context.analytics.reportError(.messaging_no_firebase,
                                           message: "FirebaseApp is not configured; messaging disabled",
                                           parameters: nil)
             return
@@ -82,6 +92,6 @@ public final class MessagingAdapter: NSObject, A1Module, A1LifecycleObserving {
 extension MessagingAdapter: MessagingDelegate {
     public func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         guard let fcmToken else { return }
-        onTokenRefresh?(fcmToken)
+        if let handler = onTokenRefresh { handler(fcmToken) } else { undeliveredToken = fcmToken }
     }
 }

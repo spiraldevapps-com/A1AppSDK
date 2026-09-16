@@ -39,7 +39,7 @@ public final class RemoteConfigAdapter: A1Module {
         analytics = context.analytics
 
         guard FirebaseApp.app() != nil else {
-            context.analytics.reportError("a1sdk_remoteconfig_no_firebase",
+            context.analytics.reportError(.remoteconfig_no_firebase,
                                           message: "FirebaseApp is not configured; Remote Config disabled",
                                           parameters: nil)
             return
@@ -70,7 +70,7 @@ public final class RemoteConfigAdapter: A1Module {
             let elapsed = CFAbsoluteTimeGetCurrent() - started
 
             if let error {
-                self?.analytics?.reportError("firebase_remoteconfig_error",
+                self?.analytics?.reportError(.firebase_remoteconfig_error,
                                              message: error.localizedDescription,
                                              parameters: nil)
                 completion?(.failure(error))
@@ -78,7 +78,7 @@ public final class RemoteConfigAdapter: A1Module {
             }
 
             let didChange = status == .successFetchedFromRemote
-            self?.analytics?.log(A1Event("remote_config_fetch_successful",
+            self?.analytics?.log(A1Event(.remote_config_fetch_successful,
                                          parameters: ["timeTaken": String(format: "%.3fs", elapsed)]))
             completion?(.success(didChange))
         }

@@ -27,6 +27,9 @@ public final class MetaAdapter: A1Module, AnalyticsProvider, A1LifecycleObservin
 
     private let lock = NSLock()
     private var isEnabled = false
+    /// `true` once `configure(context:)` has run, so a disabled module can be told apart from
+    /// one that simply has not booted yet.
+    private var isConfigured = false
     /// `true` once the Meta SDK has actually been handed `didFinishLaunching`.
     private var isSDKInitialized = false
     private var pendingEvents: [A1Event] = []
@@ -37,7 +40,13 @@ public final class MetaAdapter: A1Module, AnalyticsProvider, A1LifecycleObservin
     public func configure(context: A1ModuleContext) {
         lock.lock()
         isEnabled = context.configuration.isMetaAnalyticsEnabled
+        isConfigured = true
+        // Disabled means there will never be an initialisation to wait for. Release anyone
+        // already waiting with an empty id instead of parking them for the process lifetime.
+        let waiting = isEnabled ? [] : pendingInitialization
+        if !isEnabled { pendingInitialization.removeAll() }
         lock.unlock()
+        waiting.forEach { $0("") }
     }
 
     /// Run `work` once the Meta SDK is actually initialised — immediately if it already is.
@@ -47,6 +56,8 @@ public final class MetaAdapter: A1Module, AnalyticsProvider, A1LifecycleObservin
     public func whenInitialized(_ work: @escaping (String) -> Void) {
         lock.lock()
         if isEnabled, isSDKInitialized { lock.unlock(); work(anonymousID); return }
+        // Disabled after boot: answer now, with the same empty id callers already guard on.
+        if isConfigured, !isEnabled { lock.unlock(); work(""); return }
         pendingInitialization.append(work)
         lock.unlock()
     }

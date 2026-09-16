@@ -152,7 +152,7 @@ public final class StoreKitAdapter: A1Module, A1LifecycleObserving, @unchecked S
 
         guard let code = resolved else {
             // Kept as an event, not reportError: an existing funnel counts these.
-            analytics?.log("event_app_user_country_fail")
+            analytics?.log(.event_app_user_country_fail)
             return
         }
 
@@ -160,10 +160,13 @@ public final class StoreKitAdapter: A1Module, A1LifecycleObserving, @unchecked S
 
         let region = regionCode
         analytics?.setUserProperty(code, for: Self.storefrontProperty)
-        analytics?.log(A1Event("event_app_user_country",
-                               parameters: ["storeCountry": code, "localCountry": region]))
-        analytics?.log(A1Event("event_app_user_store_country", parameters: ["store": code]))
-        analytics?.log(A1Event("event_app_user_local_country", parameters: ["locale": region]))
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        analytics?.log(A1Event(.event_app_user_country,
+                               parameters: ["storeCountry": code, "localCountry": region, "app_version": appVersion]))
+        analytics?.log(A1Event(.event_app_user_store_country,
+                               parameters: ["store": code, "app_version": appVersion]))
+        analytics?.log(A1Event(.event_app_user_local_country,
+                               parameters: ["locale": region, "app_version": appVersion]))
     }
 
     private var regionCode: String {

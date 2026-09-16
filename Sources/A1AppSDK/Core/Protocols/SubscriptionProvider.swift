@@ -23,19 +23,25 @@ public struct A1PaywallCallbacks {
     public var onClose: (() -> Void)?
     /// Paywall finished dismissing, whatever the outcome. Fires exactly once.
     public var onDismiss: (() -> Void)?
+    /// The placement has no vendor-rendered UI: render this payload yourself, then call
+    /// `logPaywallShown` once it is on screen. Without this handler such a placement is
+    /// reported through `onError` as unavailable.
+    public var onRemoteConfig: ((A1PaywallPayload) -> Void)?
 
     public init(onLoading: ((Bool) -> Void)? = nil,
                 onError: ((A1PurchaseError) -> Void)? = nil,
                 onPurchase: ((A1PurchaseResult) -> Void)? = nil,
                 onRestore: ((A1PurchaseResult) -> Void)? = nil,
                 onClose: (() -> Void)? = nil,
-                onDismiss: (() -> Void)? = nil) {
+                onDismiss: (() -> Void)? = nil,
+                onRemoteConfig: ((A1PaywallPayload) -> Void)? = nil) {
         self.onLoading = onLoading
         self.onError = onError
         self.onPurchase = onPurchase
         self.onRestore = onRestore
         self.onClose = onClose
         self.onDismiss = onDismiss
+        self.onRemoteConfig = onRemoteConfig
     }
 }
 
@@ -70,10 +76,18 @@ public protocol SubscriptionProvider: AnyObject {
     /// Warm the cache so presentation is instant. Typically called once at launch.
     func prefetch(_ placements: [A1Placement])
 
+    /// Record an impression for a placement the app rendered itself from `.remoteConfig`.
+    /// Vendor-rendered paywalls log their own impression; never call this for one.
+    func logPaywallShown(_ placement: A1Placement)
+
     /// Restore previous purchases outside of a paywall.
     func restore(completion: @escaping (A1PurchaseResult) -> Void)
 
     /// Attach a third-party id (Meta anonymous id, Firebase app instance id, …) for
     /// revenue attribution. Key/value are vendor-defined strings.
     func setIntegrationIdentifier(key: String, value: String)
+}
+
+public extension SubscriptionProvider {
+    func logPaywallShown(_ placement: A1Placement) {}
 }

@@ -30,7 +30,7 @@ public final class FirebaseCoreAdapter: A1Module {
         isConfigured = FirebaseApp.app() != nil
 
         if !isConfigured {
-            context.analytics.reportError("a1sdk_firebase_configure_failed",
+            context.analytics.reportError(.firebase_configure_failed,
                                           message: "FirebaseApp.app() was nil after configure()",
                                           parameters: nil)
         }

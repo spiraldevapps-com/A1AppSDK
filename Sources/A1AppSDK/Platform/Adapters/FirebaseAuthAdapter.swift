@@ -34,18 +34,15 @@ public final class FirebaseAuthAdapter: A1Module {
         identity = context.identity
         analytics = context.analytics
 
-        // Stage one, synchronous. A previously established id is published immediately so
-        // modules booting in later phases are handed the real value on every launch after
-        // the first. On a genuine first launch this is empty — which is correct.
-        // Reading UserDefaults needs no vendor, so it happens even without Firebase.
-        if let cached = UserDefaults.standard.string(forKey: Self.storageKey), !cached.isEmpty {
-            context.identity.update(userID: cached)
-        }
+        // Stage one, synchronous: one publish, so later phases are handed the real value on
+        // every launch after the first. On a genuine first launch this is empty — correct.
+        let cached = UserDefaults.standard.string(forKey: Self.storageKey) ?? ""
 
         // Phase order normally guarantees Firebase is up by now, but a host app may register
         // a subset of modules. Degrade quietly rather than raising FIRAppNotConfigured.
         guard FirebaseApp.app() != nil else {
-            context.analytics.reportError("a1sdk_auth_no_firebase",
+            if !cached.isEmpty { context.identity.update(userID: cached) }
+            context.analytics.reportError(.auth_no_firebase,
                                           message: "FirebaseApp is not configured; anonymous sign-in disabled",
                                           parameters: nil)
             return
@@ -54,11 +51,16 @@ public final class FirebaseAuthAdapter: A1Module {
         let auth = Auth.auth()
         self.auth = auth
 
-        // Firebase persists its own anonymous session, so prefer its view of the user.
+        // Firebase persists its own session, so its view of the user wins. Publishing the
+        // cache first and this second would re-identify every observer twice whenever the
+        // two disagree (keychain kept across a reinstall, or a sign-out).
         if let existing = auth.currentUser?.uid, !existing.isEmpty {
             publish(existing)
             return
         }
+
+        // No Firebase session: hand later phases the last known id while sign-in runs.
+        if !cached.isEmpty { context.identity.update(userID: cached) }
 
         // Stage two, asynchronous. Launch is never blocked on this.
         signInAnonymously()
@@ -75,13 +77,16 @@ public final class FirebaseAuthAdapter: A1Module {
                 let attempt = self.retryCount
                 self.retryCount = 0
                 self.publish(uid)
-                self.analytics?.log(A1Event("event_app_login_successfully",
+                self.analytics?.log(A1Event(.event_app_login_successfully,
                                             parameters: ["Attempt": "\(attempt)"]))
                 return
             }
 
             let message = error?.localizedDescription ?? "Anonymous sign-in returned no user"
-            self.analytics?.reportError("firebase_authentication_error", message: message, parameters: nil)
+            self.analytics?.reportError(.firebase_authentication_error, message: message, parameters: nil)
+            // Shared vocabulary across the apps: one event per failed attempt, carrying the count.
+            self.analytics?.log(A1Event(.event_app_login_failed_again,
+                                        parameters: ["Attempt": "\(self.retryCount)"]))
             self.retry()
         }
     }

@@ -28,14 +28,26 @@ public final class ConsentAdapter: A1Module {
     private let lock = NSLock()
     private var booted = false
     private var resolved = false
+    /// One-shot: run at the first resolution.
     private var waiters: [() -> Void] = []
+    /// Persistent: run at every resolution, including the one after the form.
+    private var observers: [UUID: () -> Void] = [:]
 
     public init() {}
 
     public func configure(context: A1ModuleContext) {
         analytics = context.analytics
         lock.lock(); booted = true; lock.unlock()
-        manager.gatherConsent { [weak self] in self?.markResolved() }
+        manager.onConsentFormDismissed = { [weak self] in self?.reevaluate() }
+        manager.gatherConsent { [weak self] in self?.reevaluate() }
+    }
+
+    /// Resolve when UMP allows ad requests. A region that needs the form stays unresolved
+    /// until the form has been answered — `onConsentFormDismissed` brings us back here. A
+    /// launch where UMP could not answer at all (offline: status stays unknown) resolves, so
+    /// ads are not blocked forever on a network error.
+    private func reevaluate() {
+        if manager.canRequestAds || manager.isConsentStatusUnknown { markResolved() }
     }
 
     /// `true` once `configure(context:)` has run. Every UMP call is gated on it, so a host
@@ -63,14 +75,31 @@ public final class ConsentAdapter: A1Module {
         lock.unlock()
     }
 
+    /// Observe every resolution, including re-consent after the form. Fires immediately if
+    /// already resolved. Retain the token — it cancels the subscription on deinit.
+    @discardableResult
+    public func observeResolution(_ handler: @escaping () -> Void) -> A1ObservationToken {
+        let key = UUID()
+        lock.lock()
+        observers[key] = handler
+        let fireNow = resolved
+        lock.unlock()
+        if fireNow { handler() }
+        return A1ObservationToken { [weak self] in
+            guard let self else { return }
+            self.lock.lock(); self.observers[key] = nil; self.lock.unlock()
+        }
+    }
+
     private func markResolved() {
         lock.lock()
-        guard !resolved else { lock.unlock(); return }
         resolved = true
         let pending = waiters
         waiters.removeAll()
+        let current = Array(observers.values)
         lock.unlock()
         pending.forEach { $0() }
+        current.forEach { $0() }
     }
 
     /// Whether a privacy-options entry point must be shown (EEA users who already consented).
@@ -82,22 +111,28 @@ public final class ConsentAdapter: A1Module {
         return manager.isPrivacyOptionsRequired
     }
 
-    /// Present the consent form, then reconfigure ads according to the outcome.
+    /// Present the consent form from `viewController`. Once it is answered the gate re-runs
+    /// and the ads module re-applies its configuration, so ads start without app-side code.
     public func presentConsentForm(from viewController: UIViewController,
-                                   adConfiguration: AdsConfiguration,
-                                   isPro: Bool,
                                    completion: @escaping () -> Void) {
         guard isBooted else {
-            analytics?.reportError("consent_not_configured",
+            analytics?.reportError(.consent_not_configured,
                                    message: "presentConsentForm called before A1SDK.configure(with:)",
                                    parameters: nil)
             completion()
             return
         }
 
-        manager.showGDPR(from: viewController,
-                         adConfig: adConfiguration,
-                         isPro: isPro,
-                         completionHandler: completion)
+        manager.showGDPR(from: viewController, completionHandler: completion)
+    }
+
+    /// The ad parameters are ignored: the ads module re-applies its own configuration once
+    /// consent resolves.
+    @available(*, deprecated, message: "Use presentConsentForm(from:completion:). Ads reconfigure themselves after consent.")
+    public func presentConsentForm(from viewController: UIViewController,
+                                   adConfiguration: AdsConfiguration,
+                                   isPro: Bool,
+                                   completion: @escaping () -> Void) {
+        presentConsentForm(from: viewController, completion: completion)
     }
 }

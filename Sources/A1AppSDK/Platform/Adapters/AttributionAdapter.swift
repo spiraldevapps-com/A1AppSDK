@@ -111,7 +111,7 @@ public final class AttributionAdapter: A1Module {
         } catch {
             // Throws on Simulator and wherever no token exists. The marker stays unset,
             // so a device that later has one still reports on a subsequent launch.
-            analytics?.reportError("search_ads_attribution_error",
+            analytics?.reportError(.search_ads_attribution_error,
                                    message: error.localizedDescription,
                                    parameters: nil)
             resolve()
@@ -148,7 +148,7 @@ public final class AttributionAdapter: A1Module {
         lock.lock()
         guard retryCount < Self.maxRetries else {
             lock.unlock()
-            analytics?.reportError("search_ads_attribution_error",
+            analytics?.reportError(.search_ads_attribution_error,
                                    message: reason,
                                    parameters: ["attempts": Self.maxRetries])
             resolve()
@@ -175,10 +175,10 @@ public final class AttributionAdapter: A1Module {
         // tries again next launch instead of losing the attribution permanently.
         UserDefaults.standard.set(true, forKey: Self.fetchedKey)
 
-        analytics?.log(A1Event("event_app_asa_data", parameters: payload))
+        analytics?.log(A1Event(.event_app_asa_data, parameters: payload))
 
         if payload["attribution"] as? Bool == true {
-            analytics?.log(A1Event("event_app_search_ads_attributed",
+            analytics?.log(A1Event(.event_app_search_ads_attributed,
                                    keys: Self.reportedFields.map { $0.parameter },
                                    values: Self.reportedFields.map { text(payload[$0.response]) ?? "" }))
             publishUserProperties(payload)

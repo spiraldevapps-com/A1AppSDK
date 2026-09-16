@@ -42,6 +42,9 @@ public struct A1NativePaywall: Decodable {
     public let title: String?
     public let subtitle: String?
     public let features: [String]
+    /// In dashboard order, including entries whose `identifier` is empty — apps that map
+    /// products by position depend on the indices. Check `identifier.isEmpty` before
+    /// offering a row for purchase.
     public let products: [Product]
     public let ctaTitle: String?
     public let footerText: String?

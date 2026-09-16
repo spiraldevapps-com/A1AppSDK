@@ -138,11 +138,20 @@ public final class A1SDK {
             .map(\.element)
         lock.unlock()
 
+        dispatcher.setNameOverrides(configuration.eventNameOverrides)
+        dispatcher.setParameterProvider(configuration.eventParameterProvider)
         let context = makeContext()
+
+        let bootStart = CFAbsoluteTimeGetCurrent()
+        var moduleDurations: [(String, Int64)] = []
+        moduleDurations.reserveCapacity(ordered.count)
 
         for module in ordered {
             log("configuring \(module.moduleIdentifier) [phase \(module.phase.rawValue)]")
+            let started = CFAbsoluteTimeGetCurrent()
             module.configure(context: context)
+            moduleDurations.append((module.moduleIdentifier,
+                                    Int64((CFAbsoluteTimeGetCurrent() - started) * 1000)))
             // Attach only after the sink has initialised its vendor, so replayed boot
             // events land in a ready sink instead of being silently dropped.
             attachIfAnalyticsSink(module)
@@ -160,6 +169,15 @@ public final class A1SDK {
         lock.unlock()
 
         dispatcher.sealBootBuffer()
+        // The legacy EventManager emitted this on every launch for every app; keep parity.
+        dispatcher.log(.event_app_first_open)
+
+        // Launch timing, per module and in total, on the trace PerformanceAdapter opened at
+        // phase 51. Modules that booted before it (FirebaseCore) are still recorded as metrics.
+        if let performance = module(PerformanceAdapter.self) {
+            for (identifier, ms) in moduleDurations { performance.recordBootModule(identifier, milliseconds: ms) }
+            performance.finishBootTrace(totalMilliseconds: Int64((CFAbsoluteTimeGetCurrent() - bootStart) * 1000))
+        }
         log("boot complete — \(ordered.count) module(s)")
     }
 

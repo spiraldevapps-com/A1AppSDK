@@ -44,7 +44,7 @@ public final class ClarityAdapter: A1Module {
         isActive = ClaritySDK.initialize(config: config)
 
         guard isActive else {
-            context.analytics.reportError("a1sdk_clarity_init_failed",
+            context.analytics.reportError(.clarity_init_failed,
                                           message: "ClaritySDK.initialize returned false",
                                           parameters: ["projectId": projectID])
             return

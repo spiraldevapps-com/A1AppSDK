@@ -53,15 +53,22 @@ public final class AppUpdateAdapter: A1Module, A1LifecycleObserving {
     /// Show whichever prompt is due. Force wins; the optional prompt appears at most once per
     /// session. No-ops silently until a payload has been applied.
     public func checkForUpdate(canShowOptional: Bool = true) {
+        // `connectedScenes` and the presenter are main-thread only; an app calling this from
+        // a fetch completion on another queue must not have to know that.
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.checkForUpdate(canShowOptional: canShowOptional) }
+            return
+        }
         guard canPresent else { return }
         reportMissingStoreURLOnce()
         AppUpdate.shared.checkUpdate(canCheckOptionalUpdate: canShowOptional)
     }
 
-    /// `true` while an update alert is on screen.
+    /// `true` while an update alert is on screen. Tracks the alert itself, so an alert torn
+    /// down with its presenter counts as gone and the foreground re-check keeps working.
     ///
-    /// The legacy presenter latches this inside a `DispatchQueue.main.async`, so it only turns
-    /// true on the run loop turn after `checkForUpdate` — read it later, not on the same turn.
+    /// The presenter runs inside a `DispatchQueue.main.async`, so this only turns true on the
+    /// run loop turn after `checkForUpdate` — read it later, not on the same turn.
     public var isPromptShowing: Bool { AppUpdate.shared.isPopupShowing }
 
     // MARK: - A1LifecycleObserving
@@ -76,9 +83,7 @@ public final class AppUpdateAdapter: A1Module, A1LifecycleObserving {
 
     // MARK: - Presentation
 
-    /// The legacy presenter drops the alert when no root view controller exists yet, but still
-    /// latches `isPopupShowing` — which would wedge it true forever. Only check when there is
-    /// something to present into; the next foreground retries.
+    /// Nothing to present into yet (no window): skip this check, the next foreground retries.
     private var canPresent: Bool {
         UIApplication.shared.connectedScenes.contains { scene in
             (scene as? UIWindowScene)?.windows.contains { $0.rootViewController != nil } == true
@@ -87,14 +92,19 @@ public final class AppUpdateAdapter: A1Module, A1LifecycleObserving {
 
     /// An empty URL leaves "Update Now" doing nothing — a silent misconfiguration worth one report.
     private func reportMissingStoreURLOnce() {
-        guard AppUpdate.shared.appStoreURL?.isEmpty != false else { return }
+        // Only worth reporting when there is a version requirement that a prompt would act on.
+        // An app that never configured force-update must get an inert module, not a non-fatal
+        // on every launch — that noise reached Crashlytics and AppMetrica in Scanner.
+        guard let config = AppUpdate.shared.versionConfig,
+              !(config.minVersion.isEmpty && config.stableVersion.isEmpty),
+              AppUpdate.shared.appStoreURL?.isEmpty != false else { return }
         lock.lock()
         let alreadyReported = didReportMissingStoreURL
         didReportMissingStoreURL = true
         lock.unlock()
 
         guard !alreadyReported else { return }
-        analytics?.reportError("app_update_configuration_error",
+        analytics?.reportError(.app_update_configuration_error,
                                message: "No App Store URL — the update prompt cannot open the store.",
                                parameters: nil)
     }

@@ -144,7 +144,7 @@ public final class TrackingAdapter: A1Module, A1LifecycleObserving {
     }
 
     private func prompt() {
-        analytics?.log(A1Event("att_prompt_shown"))
+        analytics?.log(A1Event(.att_prompt_shown))
         // Strong self: the callback fires exactly once, and the queued completions it has to
         // deliver live on this instance.
         ATTrackingManager.requestTrackingAuthorization { raw in
@@ -155,7 +155,7 @@ public final class TrackingAdapter: A1Module, A1LifecycleObserving {
     }
 
     private func finish(_ status: A1TrackingStatus) {
-        analytics?.log(A1Event("att_prompt_result", parameters: ["status": status.rawValue]))
+        analytics?.log(A1Event(.att_prompt_result, parameters: ["status": status.rawValue]))
         publish(status)
 
         lock.lock()

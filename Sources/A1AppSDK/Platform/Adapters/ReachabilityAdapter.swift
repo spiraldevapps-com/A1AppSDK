@@ -107,7 +107,7 @@ public final class ReachabilityAdapter: A1Module {
         lock.unlock()
 
         if isLoggingEnabled {
-            analytics?.log(A1Event("network_status_changed",
+            analytics?.log(A1Event(.network_status_changed,
                                    parameters: ["connected": isUp ? "yes" : "no",
                                                 "expensive": isExpensive ? "yes" : "no"]))
         }
