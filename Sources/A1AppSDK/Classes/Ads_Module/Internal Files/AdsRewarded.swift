@@ -55,16 +55,20 @@ extension AdsRewarded: AdsRewardedType {
     
     func load() {
         EventManager.shared.logEvent(title: AdsKey.event_ad_rewarded_load_start.rawValue)
+        Ads.shared.emit(.loadStarted(.rewarded))
         GADRewardedAd.load(withAdUnitID: adUnitId, request: request()) { [weak self] (ad, error) in
             guard let self = self else { return }
 
             if let error = error {
                 EventManager.shared.logEvent(title: AdsKey.event_ad_rewarded_load_failed.rawValue)
-                self.onError?(error)
+                /// Not `onError`: those are the callbacks of the last show, which
+                /// has already finished — a show with no ad fails on its own.
+                Ads.shared.emit(.loadFailed(.rewarded, error))
                 return
             }
             
             EventManager.shared.logEvent(title: AdsKey.event_ad_rewarded_loaded.rawValue)
+            Ads.shared.emit(.loaded(.rewarded))
             self.rewardedAd = ad
             self.rewardedAd?.fullScreenContentDelegate = self
             
@@ -111,6 +115,11 @@ extension AdsRewarded: AdsRewardedType {
 extension AdsRewarded: GADFullScreenContentDelegate {
     func adDidRecordImpression(_ ad: GADFullScreenPresentingAd) {
         print("AdsRewarded did record impression for ad: \(ad)")
+        Ads.shared.emit(.impression(.rewarded))
+    }
+
+    func adDidRecordClick(_ ad: GADFullScreenPresentingAd) {
+        Ads.shared.emit(.clicked(.rewarded))
     }
 
     func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
@@ -130,6 +139,7 @@ extension AdsRewarded: GADFullScreenContentDelegate {
 
     func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         EventManager.shared.logEvent(title: AdsKey.event_ad_rewarded_show_failed.rawValue)
+        Ads.shared.emit(.presentFailed(.rewarded, error))
         onError?(error)
     }
 }

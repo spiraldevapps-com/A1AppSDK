@@ -31,6 +31,20 @@ public final class Ads: NSObject {
     private var rewardedInterstitialAd: AdsRewardedInterstitialType?
     private var nativeAd: AdsNativeType?
     private var disabled = false
+
+    /// Receives load, failure, impression and click events for every ad format.
+    /// Always called on the main thread. Optional; `nil` by default.
+    public var eventHandler: ((AdsLifecycleEvent) -> Void)?
+
+    /// `true` (default, the behaviour before 1.0.26): asking for an app open ad
+    /// that is not loaded yet starts a load and presents the ad by itself as soon
+    /// as it arrives. `false`: such a request fails straight away with
+    /// `AdsError.appOpenAdNotLoaded` and nothing is presented later.
+    public var appOpenShowsWhenLoaded = true
+
+    /// A loaded app open ad older than this is discarded unused and reloaded,
+    /// as AdMob recommends. Default 4 hours.
+    public var appOpenExpiry: TimeInterval = 4 * 3600
     
     // MARK: - Initialization
     
@@ -168,7 +182,11 @@ extension Ads: AdsType {
     }
     
     public func configureRewardedAds() {
-        let rewardedAdUnitId = configuration?.rewardedID; let enabled = configuration?.appOpenEnabled ?? false
+        /// Before 1.0.26 this read `appOpenEnabled` only, so rewarded ads never
+        /// loaded while app open was off. `appOpenEnabled` is still honoured so
+        /// apps that relied on it keep loading rewarded ads.
+        let rewardedAdUnitId = configuration?.rewardedID
+        let enabled = (configuration?.rewardedEnabled ?? false) || (configuration?.appOpenEnabled ?? false)
         if let rewardedAdUnitId = rewardedAdUnitId, let requestBuilder =  self.requestBuilder {
             if enabled {
                 rewardedAd = AdsRewarded(
@@ -415,3 +433,16 @@ private extension Ads {
     }
 }
 
+// MARK: - Lifecycle events
+
+extension Ads {
+    /// Reports an event to `eventHandler` on the main thread.
+    func emit(_ event: AdsLifecycleEvent) {
+        guard let handler = eventHandler else { return }
+        if Thread.isMainThread {
+            handler(event)
+        } else {
+            DispatchQueue.main.async { handler(event) }
+        }
+    }
+}

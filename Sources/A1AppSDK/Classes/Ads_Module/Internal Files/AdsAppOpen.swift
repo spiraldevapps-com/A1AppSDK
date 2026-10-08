@@ -35,6 +35,7 @@ final class AppOpenAdManager: NSObject {
   var isShowingAd = false
   var isAppOpenAdSplash = false
   /// Keeps track of the time when an app open ad was loaded to discard expired ad.
+    private var loadTime: Date?
     private var viewController: UIViewController?
     private var showAdAfterLoad = false
 
@@ -50,8 +51,20 @@ final class AppOpenAdManager: NSObject {
     }
 
   private func isAdAvailable() -> Bool {
-    // Check if ad exists and can be shown.
+    // Check if ad exists, can be shown, and has not expired.
+    discardIfExpired()
     return appOpenAd != nil
+  }
+
+  /// Drops a loaded ad older than `Ads.appOpenExpiry`, which AdMob may no longer fill.
+  private func discardIfExpired() {
+    guard appOpenAd != nil, !isShowingAd, let loadTime,
+          Date().timeIntervalSince(loadTime) >= Ads.shared.appOpenExpiry else { return }
+    print("App open ad expired — discarding.")
+    appOpenAd?.fullScreenContentDelegate = nil
+    appOpenAd = nil
+    self.loadTime = nil
+    Ads.shared.emit(.expired(.appOpen))
   }
 
   func loadAd() {
@@ -60,6 +73,7 @@ final class AppOpenAdManager: NSObject {
       return
     }
       EventManager.shared.logEvent(title: AdsKey.event_ad_appopen_load_start.rawValue)
+      Ads.shared.emit(.loadStarted(.appOpen))
     isLoadingAd = true
     print("Start loading app open ad.")
     GADAppOpenAd.load(withAdUnitID: adUnitId, request: request()) { [weak self] (ad, error) in
@@ -70,10 +84,19 @@ final class AppOpenAdManager: NSObject {
         print("App open ad failed to load with error: \(error.localizedDescription)")
           EventManager.shared.logEvent(title: AdsKey.event_ad_appopen_load_failed.rawValue)
           EventManager.shared.logEvent(title: AppErrorKey.event_ad_error_load_failed.rawValue, key: "error", value: error.localizedDescription)
-          self.onError?(error)
+          Ads.shared.emit(.loadFailed(.appOpen, error))
+          /// Only a show still waiting on this load is told; otherwise these are
+          /// the callbacks of an ad that has already come and gone.
+          if self.showAdAfterLoad {
+              self.showAdAfterLoad = false
+              self.viewController = nil
+              self.onError?(error)
+          }
         return
       }
         EventManager.shared.logEvent(title: AdsKey.event_ad_appopen_loaded.rawValue)
+      self.loadTime = Date()
+      Ads.shared.emit(.loaded(.appOpen))
       self.appOpenAd = ad
       self.appOpenAd?.fullScreenContentDelegate = self
         print("App open ad loaded successfully.")
@@ -108,6 +131,14 @@ final class AppOpenAdManager: NSObject {
     // method and load a new ad.
     if !isAdAvailable() {
       print("App open ad is not ready yet.")
+      if !Ads.shared.appOpenShowsWhenLoaded {
+          /// Fail now rather than present by itself later.
+          showAdAfterLoad = false
+          self.viewController = nil
+          loadAd()
+          onError?(AdsError.appOpenAdNotLoaded)
+          return
+      }
       loadAd()
       return
     }
@@ -129,8 +160,17 @@ extension AppOpenAdManager: GADFullScreenContentDelegate {
     onOpen?()
   }
 
+  func adDidRecordImpression(_ ad: GADFullScreenPresentingAd) {
+    Ads.shared.emit(.impression(.appOpen))
+  }
+
+  func adDidRecordClick(_ ad: GADFullScreenPresentingAd) {
+    Ads.shared.emit(.clicked(.appOpen))
+  }
+
   func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
     appOpenAd = nil
+    loadTime = nil
     isShowingAd = false
     print("App open ad was dismissed.")
       // Send callback
@@ -149,6 +189,7 @@ extension AppOpenAdManager: GADFullScreenContentDelegate {
       EventManager.shared.logEvent(title: AdsKey.event_ad_appopen_show_failed.rawValue)
       EventManager.shared.logEvent(title: AppErrorKey.event_ad_error_show_failed.rawValue, key: "error", value: error.localizedDescription)
       print("App open ad failed to present with error: \(error.localizedDescription)")
+      Ads.shared.emit(.presentFailed(.appOpen, error))
       if appOpenAd == nil {
           loadAd()
       }
@@ -185,6 +226,7 @@ extension AppOpenAdManager: AdsAppOpenType {
     func stopLoading() {
         appOpenAd?.fullScreenContentDelegate = nil
         appOpenAd = nil
+        loadTime = nil
     }
     
     func show(from viewController: UIViewController, onOpen: (() -> Void)?, onClose: (() -> Void)?, onError: ((Error) -> Void)?) {

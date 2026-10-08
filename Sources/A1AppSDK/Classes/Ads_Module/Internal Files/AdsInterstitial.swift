@@ -55,16 +55,20 @@ extension AdsInterstitial: AdsInterstitialType {
     
     func load() {
         EventManager.shared.logEvent(title: AdsKey.event_ad_inter_load_start.rawValue)
+        Ads.shared.emit(.loadStarted(.interstitial))
         GADInterstitialAd.load(withAdUnitID: adUnitId, request: request()) { [weak self] (ad, error) in
             guard let self = self else { return }
 
             if let error = error {
                 EventManager.shared.logEvent(title: AdsKey.event_ad_inter_load_failed.rawValue)
                 EventManager.shared.logEvent(title: AppErrorKey.event_ad_error_load_failed.rawValue, key: "error", value: error.localizedDescription)
-                self.onError?(error)
+                /// Not `onError`: those are the callbacks of the last show, which
+                /// has already finished — a show with no ad fails on its own.
+                Ads.shared.emit(.loadFailed(.interstitial, error))
                 return
             }
             EventManager.shared.logEvent(title: AdsKey.event_ad_inter_loaded.rawValue)
+            Ads.shared.emit(.loaded(.interstitial))
             self.interstitialAd = ad
             self.interstitialAd?.fullScreenContentDelegate = self
         }
@@ -109,6 +113,11 @@ extension AdsInterstitial: AdsInterstitialType {
 extension AdsInterstitial: GADFullScreenContentDelegate {
     func adDidRecordImpression(_ ad: GADFullScreenPresentingAd) {
         print("AdsInterstitial did record impression for ad: \(ad)")
+        Ads.shared.emit(.impression(.interstitial))
+    }
+
+    func adDidRecordClick(_ ad: GADFullScreenPresentingAd) {
+        Ads.shared.emit(.clicked(.interstitial))
     }
 
     func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
@@ -130,6 +139,7 @@ extension AdsInterstitial: GADFullScreenContentDelegate {
     func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         EventManager.shared.logEvent(title: AdsKey.event_ad_inter_show_failed.rawValue)
         EventManager.shared.logEvent(title: AppErrorKey.event_ad_error_show_failed.rawValue, key: "error", value: error.localizedDescription)
+        Ads.shared.emit(.presentFailed(.interstitial, error))
         onError?(error)
     }
 }
