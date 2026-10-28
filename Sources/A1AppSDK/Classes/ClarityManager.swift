@@ -11,7 +11,7 @@ import Clarity
 public struct ClarityManager {
     
     public static func initialized(id: String) {
-        let clarityConfig = ClarityConfig(projectId: id, logLevel: .verbose)
+        let clarityConfig = ClarityConfig(projectId: id, logLevel: .error)
         ClaritySDK.initialize(config: clarityConfig)
     }
     static func setCustomUser(id: String) {
