@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import SafariServices
 import Adapty
 import AdaptyUI
 
@@ -18,9 +19,12 @@ public final class AdaptyAdapter: NSObject, A1Module, SubscriptionProvider, @unc
     // MARK: - State
 
     private let lock = NSLock()
-    private var cachedPaywalls: [String: (controller: AdaptyPaywallController, paywall: AdaptyPaywall)] = [:]
+    private var cachedPaywalls: [String: (controller: AdaptyFlowController, flow: AdaptyFlow)] = [:]
     /// Placements the app renders itself, kept so `logPaywallShown` can attribute the impression.
-    private var nativePaywalls: [String: AdaptyPaywall] = [:]
+    private var nativePaywalls: [String: AdaptyFlow] = [:]
+    /// The placement each builder controller shows. Adapty 4's `AdaptyFlowController` no longer
+    /// exposes it, and every delegate event is attributed to one.
+    private var controllerPlacements: [ObjectIdentifier: String] = [:]
     /// Callbacks keyed by the controller presenting them, so two placements shown in
     /// sequence cannot deliver each other's callbacks.
     private var activeCallbacks: [ObjectIdentifier: A1PaywallCallbacks] = [:]
@@ -151,10 +155,10 @@ public final class AdaptyAdapter: NSObject, A1Module, SubscriptionProvider, @unc
     /// Each source is optional: an app that did not register a module simply skips that link.
     private func linkIntegrationIdentifiers(identity: A1Identity) {
         if let id = A1SDK.shared.module(FirebaseAnalyticsAdapter.self)?.appInstanceID, !id.isEmpty {
-            setIntegrationIdentifier(key: "firebase_app_instance_id", value: id)
+            setIntegrationIdentifier(.firebaseAppInstanceId(id))
         }
         if let id = A1SDK.shared.module(AppMetricaAdapter.self)?.deviceID, !id.isEmpty {
-            setIntegrationIdentifier(key: "appmetrica_device_id", value: id)
+            setIntegrationIdentifier(.appmetricaDeviceId(id))
         }
         // The AppMetrica profile id is the app's user id (that is what userProfileID is set to),
         // so it follows identity — including the first-launch resolution. Only when AppMetrica
@@ -162,13 +166,13 @@ public final class AdaptyAdapter: NSObject, A1Module, SubscriptionProvider, @unc
         if A1SDK.shared.module(AppMetricaAdapter.self) != nil {
             integrationIdentityToken = identity.observe { [weak self] userID in
                 guard !userID.isEmpty else { return }
-                self?.setIntegrationIdentifier(key: "appmetrica_profile_id", value: userID)
+                self?.setIntegrationIdentifier(.appmetricaProfileId(userID))
             }
         }
         // Meta's id only exists once its SDK has seen didFinishLaunching.
         A1SDK.shared.module(MetaAdapter.self)?.whenInitialized { [weak self] anonymousID in
             guard !anonymousID.isEmpty else { return }
-            self?.setIntegrationIdentifier(key: "facebook_anonymous_id", value: anonymousID)
+            self?.setIntegrationIdentifier(.facebookAnonymousId(anonymousID))
         }
     }
 
@@ -266,25 +270,25 @@ public final class AdaptyAdapter: NSObject, A1Module, SubscriptionProvider, @unc
             return
         }
 
-        Adapty.getPaywall(placementId: placement.rawValue, locale: locale) { [weak self] result in
+        Adapty.getFlow(placementId: placement.rawValue) { [weak self] result in
             guard let self else { return }
 
             switch result {
-            case let .success(paywall):
+            case let .success(flow):
                 // The vendor's own discriminator decides which case this placement is:
                 // a builder-rendered screen, or a JSON payload the app renders itself.
-                guard paywall.hasViewConfiguration else {
-                    guard let remote = paywall.remoteConfig else {
+                guard flow.hasViewConfiguration else {
+                    guard let remote = self.remoteConfig(of: flow) else {
                         completion(.failure(.paywallUnavailable))
                         return
                     }
-                    self.withLock { self.nativePaywalls[placement.rawValue] = paywall }
+                    self.withLock { self.nativePaywalls[placement.rawValue] = flow }
                     completion(.success(.remoteConfig(A1PaywallPayload(placement: placement,
                                                                       locale: remote.locale,
                                                                       jsonString: remote.jsonString))))
                     return
                 }
-                self.buildController(for: paywall, placement: placement, completion: completion)
+                self.buildController(for: flow, placement: placement, completion: completion)
 
             case let .failure(error):
                 self.reportLoadFailure(error, placement: placement, completion: completion)
@@ -292,21 +296,41 @@ public final class AdaptyAdapter: NSObject, A1Module, SubscriptionProvider, @unc
         }
     }
 
-    private func buildController(for paywall: AdaptyPaywall,
+    /// Adapty 4 returns a flow's remote config in every locale it was set up in, where 3.x
+    /// picked one at fetch time. Choose the same way: the configured locale, then its language,
+    /// then English, then whatever the dashboard has.
+    private func remoteConfig(of flow: AdaptyFlow) -> AdaptyRemoteConfig? {
+        let configs = flow.remoteConfigs
+        func language(_ code: String) -> String {
+            code.lowercased().split(whereSeparator: { $0 == "-" || $0 == "_" }).first.map(String.init) ?? ""
+        }
+        if let locale, !locale.isEmpty {
+            if let exact = configs.first(where: { $0.locale.caseInsensitiveCompare(locale) == .orderedSame }) {
+                return exact
+            }
+            if let sameLanguage = configs.first(where: { language($0.locale) == language(locale) }) {
+                return sameLanguage
+            }
+        }
+        return configs.first { language($0.locale) == "en" } ?? configs.first
+    }
+
+    private func buildController(for flow: AdaptyFlow,
                                  placement: A1Placement,
                                  completion: @escaping (Result<A1PaywallConfig, A1PurchaseError>) -> Void) {
-        AdaptyUI.getPaywallConfiguration(forPaywall: paywall) { [weak self] result in
+        // The locale moved from the fetch to the configuration in Adapty 4.
+        AdaptyUI.getFlowConfiguration(forFlow: flow, locale: locale) { [weak self] result in
             guard let self else { return }
 
             switch result {
             case let .success(configuration):
-                // AdaptyUI.paywallController is @MainActor-isolated, so this must be an
+                // AdaptyUI.flowController is @MainActor-isolated, so this must be an
                 // async hop rather than the synchronous onMain fast-path.
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
                     do {
-                        let controller = try AdaptyUI.paywallController(with: configuration, delegate: self)
-                        self.cache(controller: controller, paywall: paywall, for: placement)
+                        let controller = try AdaptyUI.flowController(with: configuration, delegate: self)
+                        self.cache(controller: controller, flow: flow, for: placement)
                         completion(.success(.builder(controller)))
                     } catch {
                         self.analytics?.reportError(.adapty_rendering_error,
@@ -415,8 +439,8 @@ public final class AdaptyAdapter: NSObject, A1Module, SubscriptionProvider, @unc
     }
 
     public func logPaywallShown(_ placement: A1Placement) {
-        if let paywall = withLock({ nativePaywalls[placement.rawValue] }) {
-            Adapty.logShowPaywall(paywall)
+        if let flow = withLock({ nativePaywalls[placement.rawValue] }) {
+            Adapty.logShowFlow(flow)
             return
         }
         guard isActivated else {
@@ -425,11 +449,11 @@ public final class AdaptyAdapter: NSObject, A1Module, SubscriptionProvider, @unc
         }
         // Not resolved through this adapter yet (the app fetched nothing before rendering):
         // fetch once so the impression is still attributed to the right paywall variation.
-        Adapty.getPaywall(placementId: placement.rawValue, locale: locale) { [weak self] result in
+        Adapty.getFlow(placementId: placement.rawValue) { [weak self] result in
             // A Builder placement logs its own impression; logging it here would double count.
-            guard case let .success(paywall) = result, !paywall.hasViewConfiguration else { return }
-            self?.withLock { self?.nativePaywalls[placement.rawValue] = paywall }
-            Adapty.logShowPaywall(paywall)
+            guard case let .success(flow) = result, !flow.hasViewConfiguration else { return }
+            self?.withLock { self?.nativePaywalls[placement.rawValue] = flow }
+            Adapty.logShowFlow(flow)
         }
     }
 
@@ -459,27 +483,38 @@ public final class AdaptyAdapter: NSObject, A1Module, SubscriptionProvider, @unc
     }
 
     public func setIntegrationIdentifier(key: String, value: String) {
+        setIntegrationIdentifier(AdaptyIntegrationIdentifier(key: .init(rawValue: key), value: value))
+    }
+
+    private func setIntegrationIdentifier(_ identifier: AdaptyIntegrationIdentifier) {
         guard isActivated else {
             reportInactive("setIntegrationIdentifier")
             return
         }
 
-        Adapty.setIntegrationIdentifier(key: key, value: value) { [weak self] error in
+        Adapty.setIntegrationIdentifier(identifier) { [weak self] error in
             guard let error else { return }
             self?.analytics?.reportError(.adapty_integration_identifier_error,
                                          message: error.localizedDescription,
-                                         parameters: ["key": key])
+                                         parameters: ["key": identifier.key.rawValue])
         }
     }
 
     // MARK: - Cache
 
-    private func cachedPaywall(for placement: A1Placement) -> (controller: AdaptyPaywallController, paywall: AdaptyPaywall)? {
+    private func cachedPaywall(for placement: A1Placement) -> (controller: AdaptyFlowController, flow: AdaptyFlow)? {
         withLock { cachedPaywalls[placement.rawValue] }
     }
 
-    private func cache(controller: AdaptyPaywallController, paywall: AdaptyPaywall, for placement: A1Placement) {
-        withLock { cachedPaywalls[placement.rawValue] = (controller, paywall) }
+    private func cache(controller: AdaptyFlowController, flow: AdaptyFlow, for placement: A1Placement) {
+        withLock {
+            cachedPaywalls[placement.rawValue] = (controller, flow)
+            controllerPlacements[ObjectIdentifier(controller)] = placement.rawValue
+        }
+    }
+
+    private func placementID(of controller: AdaptyFlowController) -> String {
+        withLock { controllerPlacements[ObjectIdentifier(controller)] } ?? "unknown"
     }
 
     private func store(_ callbacks: A1PaywallCallbacks, for controller: UIViewController) {
@@ -555,39 +590,44 @@ public final class AdaptyAdapter: NSObject, A1Module, SubscriptionProvider, @unc
     }
 }
 
-// MARK: - AdaptyPaywallControllerDelegate
+// MARK: - AdaptyFlowControllerDelegate
 
-extension AdaptyAdapter: AdaptyPaywallControllerDelegate {
+extension AdaptyAdapter: AdaptyFlowControllerDelegate {
 
-    public func paywallController(_ controller: AdaptyPaywallController, didPerform action: AdaptyUI.Action) {
+    public func flowController(_ controller: AdaptyFlowController, didPerform action: AdaptyUI.Action) {
         switch action {
         case .close:
             analytics?.log(A1Event(.event_app_paywall_cross_clicked,
-                                   keys: ["Placement"], values: [controller.paywallPlacementId]))
+                                   keys: ["Placement"], values: [placementID(of: controller)]))
             callbacks(for: controller)?.onClose?()
             finish(controller)
 
-        case let .openURL(url):
-            UIApplication.shared.open(url, options: [:])
+        case let .openURL(url, presentation):
+            switch presentation {
+            case .inAppBrowser:
+                controller.present(SFSafariViewController(url: url), animated: true)
+            case .externalBrowser:
+                UIApplication.shared.open(url, options: [:])
+            }
 
         case .custom:
             break
         }
     }
 
-    public func paywallController(_ controller: AdaptyPaywallController,
-                                  didSelectProduct product: AdaptyPaywallProductWithoutDeterminingOffer) {
+    public func flowController(_ controller: AdaptyFlowController,
+                                  didSelectProduct product: AdaptyPaywallProduct) {
         analytics?.log(A1Event(.event_subs_paywall_plan_selected,
                                keys: ["Placement", "Plan ID"],
-                               values: [controller.paywallPlacementId, product.vendorProductId]))
+                               values: [placementID(of: controller), product.vendorProductId]))
     }
 
-    public func paywallController(_ controller: AdaptyPaywallController,
+    public func flowController(_ controller: AdaptyFlowController,
                                   didStartPurchase product: AdaptyPaywallProduct) {
         analytics?.log(.event_subs_purchase_started)
     }
 
-    public func paywallController(_ controller: AdaptyPaywallController,
+    public func flowController(_ controller: AdaptyFlowController,
                                   didFinishPurchase product: AdaptyPaywallProduct,
                                   purchaseResult: AdaptyPurchaseResult) {
         let handlers = callbacks(for: controller)
@@ -604,23 +644,23 @@ extension AdaptyAdapter: AdaptyPaywallControllerDelegate {
         case let .success(profile, _):
             let active = applyEntitlement(from: profile)
 
-            if #available(iOS 15.0, *), let transaction = purchaseResult.sk2Transaction {
+            if let transaction = purchaseResult.signedTransaction?.unsafePayloadValue {
                 // Routed through the Firebase module so this file never imports Firebase.
                 A1SDK.shared.module(FirebaseAnalyticsAdapter.self)?.logTransaction(transaction)
             }
 
             analytics?.log(A1Event(.event_subs_purchase_acknowledged,
                                    keys: ["Placement", "Product"],
-                                   values: [controller.paywallPlacementId, product.vendorProductId]))
+                                   values: [placementID(of: controller), product.vendorProductId]))
 
             handlers?.onPurchase?(.success(A1Transaction(productIdentifier: product.vendorProductId,
-                                                         placement: A1Placement(controller.paywallPlacementId),
+                                                         placement: A1Placement(placementID(of: controller)),
                                                          isActive: active)))
             finish(controller)
         }
     }
 
-    public func paywallController(_ controller: AdaptyPaywallController,
+    public func flowController(_ controller: AdaptyFlowController,
                                   didFailPurchase product: AdaptyPaywallProduct,
                                   error: AdaptyError) {
         analytics?.log(.event_subs_paywall_payment_failed)
@@ -628,39 +668,39 @@ extension AdaptyAdapter: AdaptyPaywallControllerDelegate {
         callbacks(for: controller)?.onPurchase?(.failed(Self.map(error)))
     }
 
-    public func paywallControllerDidStartRestore(_ controller: AdaptyPaywallController) {
+    public func flowControllerDidStartRestore(_ controller: AdaptyFlowController) {
         analytics?.log(.event_subs_restore_started)
     }
 
-    public func paywallController(_ controller: AdaptyPaywallController,
+    public func flowController(_ controller: AdaptyFlowController,
                                   didFinishRestoreWith profile: AdaptyProfile) {
         let active = applyEntitlement(from: profile)
 
         if active {
             analytics?.log(A1Event(.event_app_paywall_restore_acknowledged,
-                                   keys: ["Placement"], values: [controller.paywallPlacementId]))
+                                   keys: ["Placement"], values: [placementID(of: controller)]))
         }
 
         callbacks(for: controller)?.onRestore?(active
             ? .success(A1Transaction(productIdentifier: "",
-                                     placement: A1Placement(controller.paywallPlacementId),
+                                     placement: A1Placement(placementID(of: controller)),
                                      isActive: true))
             : .failed(.nothingToRestore))
     }
 
-    public func paywallController(_ controller: AdaptyPaywallController, didFailRestoreWith error: AdaptyError) {
+    public func flowController(_ controller: AdaptyFlowController, didFailRestoreWith error: AdaptyError) {
         analytics?.reportError(.adapty_restorepurchase_error, message: error.localizedDescription, parameters: nil)
         callbacks(for: controller)?.onRestore?(.failed(.restoreFailed(error.localizedDescription)))
     }
 
-    public func paywallController(_ controller: AdaptyPaywallController,
+    public func flowController(_ controller: AdaptyFlowController,
                                   didFailLoadingProductsWith error: AdaptyError) -> Bool {
         analytics?.reportError(.adapty_productdetailloading_error, message: error.localizedDescription, parameters: nil)
         // true keeps Adapty retrying, matching existing behaviour.
         return true
     }
 
-    public func paywallController(_ controller: AdaptyPaywallController, didFailRenderingWith error: AdaptyUIError) {
+    public func flowController(_ controller: AdaptyFlowController, didReceiveError error: AdaptyUIError) {
         analytics?.reportError(.adapty_rendering_error, message: error.localizedDescription, parameters: nil)
         callbacks(for: controller)?.onError?(.renderingFailed(error.localizedDescription))
     }

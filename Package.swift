@@ -24,7 +24,7 @@ let package = Package(
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
         .package(url: "https://github.com/microsoft/clarity-apps", exact: "3.5.4"),
         .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.7.1"),
-        .package(url: "https://github.com/adaptyteam/AdaptySDK-iOS.git", exact: "3.15.7")
+        .package(url: "https://github.com/adaptyteam/AdaptySDK-iOS.git", exact: "4.3.1")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
