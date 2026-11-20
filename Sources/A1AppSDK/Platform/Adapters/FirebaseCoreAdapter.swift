@@ -19,6 +19,11 @@ public final class FirebaseCoreAdapter: A1Module {
     public init() {}
 
     public func configure(context: A1ModuleContext) {
+        // Firebase prints notices at its default level; with logging off only errors remain.
+        if !context.configuration.isLoggingEnabled {
+            FirebaseConfiguration.shared.setLoggerLevel(.min)
+        }
+
         // Guard against a host app that still calls FirebaseApp.configure() itself —
         // configuring twice raises an exception.
         guard FirebaseApp.app() == nil else {

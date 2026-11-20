@@ -147,7 +147,7 @@ One initialiser, every parameter defaulted. Listed in initialiser order.
 | `eventNameOverrides` | `[String: String]` | `[:]` | Rename SDK events, `[sdkName: yourName]` |
 | `eventParameterProvider` | `(() -> [String: Any])?` | `nil` | Parameters merged into every SDK event |
 | `paywallLoadTimeout` | `TimeInterval` | `10` | Seconds before a paywall presentation gives up |
-| `isLoggingEnabled` | `Bool` | `false` | Boot logs and vendor verbose logging |
+| `isLoggingEnabled` | `Bool` | `true` in Debug, `false` in Release | Boot logs and vendor verbose logging |
 | `custom` | `[String: Any]` | `[:]` | Free-form values for modules |
 
 `SupportCredentials`:

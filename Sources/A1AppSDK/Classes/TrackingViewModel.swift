@@ -24,21 +24,21 @@ public class TrackingViewModel {
         switch status {
         case .authorized:
             // racking authorization dialog was shown and we are authorized
-            print("Authorized")
+            sdkDebugPrint("Authorized")
             trackingModelStatus = .authorized
         case .denied:
             // Tracking authorization dialog was shown and permission is denied
-            print("Denied")
+            sdkDebugPrint("Denied")
             trackingModelStatus = .denied
         case .notDetermined:
             // Tracking authorization dialog has not been shown
-            print("Not Determined")
+            sdkDebugPrint("Not Determined")
             trackingModelStatus = .notDetermined
         case .restricted:
-            print("Restricted")
+            sdkDebugPrint("Restricted")
             trackingModelStatus = .denied
         @unknown default:
-            print("Unknown")
+            sdkDebugPrint("Unknown")
             trackingModelStatus = .unknown
         }
     }
@@ -60,18 +60,18 @@ public class TrackingViewModel {
             switch status {
             case .authorized:
                 // Tracking authorization dialog was shown and we are authorized
-                print("Authorized")
-                print("IDFA", self.getIDFA())
+                sdkDebugPrint("Authorized")
+                sdkDebugPrint("IDFA \(self.getIDFA())")
             case .denied:
                 // Tracking authorization dialog was shown and permission is denied
-                print("Denied")
+                sdkDebugPrint("Denied")
             case .notDetermined:
                 // Tracking authorization dialog has not been shown
-                print("Not Determined")
+                sdkDebugPrint("Not Determined")
             case .restricted:
-                print("Restricted")
+                sdkDebugPrint("Restricted")
             @unknown default:
-                print("Unknown")
+                sdkDebugPrint("Unknown")
             }
         }
     }

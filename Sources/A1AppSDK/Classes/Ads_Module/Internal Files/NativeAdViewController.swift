@@ -33,7 +33,7 @@ public class NativeAdViewController: UIViewController {
     // MARK: - De-Initialization
 
     deinit {
-        print("Deinit NativeAdViewController")
+        sdkDebugPrint("Deinit NativeAdViewController")
     }
 
     // MARK: - Life Cycle
@@ -47,10 +47,10 @@ public class NativeAdViewController: UIViewController {
             adUnitIdType: .plist,
             loaderOptions: .single,
             onFinishLoading: {
-                print("NativeAdViewController ad finished loading")
+                sdkDebugPrint("NativeAdViewController ad finished loading")
             },
             onError: { error in
-                print("NativeAdViewController ad loading error \(error)")
+                sdkDebugPrint("NativeAdViewController ad loading error \(error)")
             },
             onReceive: { [weak self] nativeAd in
                 self?.showNativeAd(nativeAd)

@@ -16,14 +16,17 @@ let package = Package(
             targets: ["A1AppSDK"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/Alamofire/Alamofire.git", exact: "5.9.1"),
-        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "12.16.0"),
-        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", exact: "18.1.0"),
-        .package(url: "https://github.com/appmetrica/appmetrica-sdk-ios", exact: "6.5.1"),
+        .package(url: "https://github.com/Alamofire/Alamofire.git", exact: "5.12.2"),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "12.19.3"),
+        // Stay on 18.0.3: 18.1.0–19.0.1 ship arm64e slices that can stop apps launching on
+        // iOS 17–18 after an App Store update (facebook-ios-sdk #3997). Move up once a fixed
+        // release is out.
+        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", exact: "18.0.3"),
+        .package(url: "https://github.com/appmetrica/appmetrica-sdk-ios", exact: "6.7.1"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
         .package(url: "https://github.com/microsoft/clarity-apps", exact: "3.5.4"),
-        .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.7.1"),
+        .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.11.0"),
         .package(url: "https://github.com/adaptyteam/AdaptySDK-iOS.git", exact: "4.3.1")
     ],
     targets: [

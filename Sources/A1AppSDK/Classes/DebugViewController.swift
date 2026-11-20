@@ -55,7 +55,6 @@ public class DebugViewController: UIViewController {
     print("I'm running in DEBUG mode")
         versionLabel.text = "Version Name = \(name)-\(version)-internal"
 #else
-    print("I'm running in a non-DEBUG mode")
         versionLabel.text = "Version Name = \(name)-\(version)-production"
 #endif
         if Ads.shared.isDisabled == true {

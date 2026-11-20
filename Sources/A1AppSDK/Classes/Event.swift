@@ -100,7 +100,7 @@ public class EventManager: NSObject {
         guard !appMetricaKey.isEmpty,
               let configuration = AppMetricaConfiguration(apiKey: appMetricaKey) else { return }
         configuration.userProfileID = userId
-        configuration.areLogsEnabled = false
+        configuration.areLogsEnabled = A1Configuration.isDebugBuild
         AppMetrica.activate(with: configuration)
     }
 

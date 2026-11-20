@@ -104,8 +104,19 @@ public struct A1Configuration {
 
     // MARK: - Diagnostics
 
-    /// Emit SDK boot diagnostics. Leave off in release.
+    /// Console logs from the SDK and the vendor SDKs it starts (Adapty, AppMetrica, Clarity,
+    /// Firebase, Intercom). Defaults to on in Debug builds and off in Release builds.
     public var isLoggingEnabled: Bool
+
+    /// True when the SDK is compiled in a Debug configuration — the default for
+    /// `isLoggingEnabled`, and the switch for the SDK's own debug-only console output.
+    public static var isDebugBuild: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
 
     // MARK: - Extension point
 
@@ -133,7 +144,7 @@ public struct A1Configuration {
                 eventNameOverrides: [String: String] = [:],
                 eventParameterProvider: (() -> [String: Any])? = nil,
                 paywallLoadTimeout: TimeInterval = 10,
-                isLoggingEnabled: Bool = false,
+                isLoggingEnabled: Bool = A1Configuration.isDebugBuild,
                 custom: [String: Any] = [:]) {
         self.appMetricaAPIKey = appMetricaAPIKey
         self.isFirebaseAnalyticsEnabled = isFirebaseAnalyticsEnabled

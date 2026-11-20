@@ -194,13 +194,13 @@ class DebugAdsViewController: UIViewController, UITableViewDataSource, UITableVi
         Ads.shared.showInterstitialAd(
             from: self,
             onOpen: {
-                print(" interstitial ad did open")
+                sdkDebugPrint(" interstitial ad did open")
             },
             onClose: {
-                print(" interstitial ad did close")
+                sdkDebugPrint(" interstitial ad did close")
             },
             onError: { error in
-                print(" interstitial ad error \(error)")
+                sdkDebugPrint(" interstitial ad error \(error)")
             }
         )
     }
@@ -210,13 +210,13 @@ class DebugAdsViewController: UIViewController, UITableViewDataSource, UITableVi
         Ads.shared.showRewardedAd(
             from: self,
             onOpen: {
-                print(" rewarded ad did open")
+                sdkDebugPrint(" rewarded ad did open")
             },
             onClose: {
-                print(" rewarded ad did close")
+                sdkDebugPrint(" rewarded ad did close")
             },
             onError: { error in
-                print(" rewarded ad error \(error)")
+                sdkDebugPrint(" rewarded ad error \(error)")
             },
             onNotReady: { [weak self] in
                 guard let self = self else { return }
@@ -231,7 +231,7 @@ class DebugAdsViewController: UIViewController, UITableViewDataSource, UITableVi
                 }
             },
             onReward: ({ rewardAmount in
-                print(" rewarded ad did reward user with \(rewardAmount)")
+                sdkDebugPrint(" rewarded ad did reward user with \(rewardAmount)")
             })
         )
     }
@@ -241,16 +241,16 @@ class DebugAdsViewController: UIViewController, UITableViewDataSource, UITableVi
         Ads.shared.showRewardedInterstitialAd(
             from: self,
             onOpen: {
-                print(" rewarded interstitial ad did open")
+                sdkDebugPrint(" rewarded interstitial ad did open")
             },
             onClose: {
-                print(" rewarded interstitial ad did close")
+                sdkDebugPrint(" rewarded interstitial ad did close")
             },
             onError: { error in
-                print(" rewarded interstitial ad error \(error)")
+                sdkDebugPrint(" rewarded interstitial ad error \(error)")
             },
             onReward: { rewardAmount in
-                print(" rewarded interstitial ad did reward user with \(rewardAmount)")
+                sdkDebugPrint(" rewarded interstitial ad did reward user with \(rewardAmount)")
             }
         )
     }
@@ -260,22 +260,22 @@ class DebugAdsViewController: UIViewController, UITableViewDataSource, UITableVi
         let banner = Ads.shared.makeBannerAd(
             in: self,
             onOpen: {
-                print(" banner ad did open")
+                sdkDebugPrint(" banner ad did open")
             },
             onClose: {
-                print(" banner ad did close")
+                sdkDebugPrint(" banner ad did close")
             },
             onError: { error in
-                print(" banner ad error \(error)")
+                sdkDebugPrint(" banner ad error \(error)")
             },
             onWillPresentScreen: {
-                print(" banner ad was tapped and is about to present screen")
+                sdkDebugPrint(" banner ad was tapped and is about to present screen")
             },
             onWillDismissScreen: {
-                print(" banner ad screen is about to be dismissed")
+                sdkDebugPrint(" banner ad screen is about to be dismissed")
             },
             onDidDismissScreen: {
-                print(" banner did dismiss screen")
+                sdkDebugPrint(" banner did dismiss screen")
             }
         )
         

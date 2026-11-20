@@ -59,7 +59,7 @@ public class ConsentManager {
         }
         UMPConsentForm.load { (form, error) in
             if let error = error {
-                print("Failed to load form: \(error.localizedDescription)")
+                sdkDebugPrint("Failed to load form: \(error.localizedDescription)")
                 finish(false)
                 return
             }

@@ -180,7 +180,7 @@ class AdsFullScreen: NSObject {
 
 extension AdsFullScreen: GADFullScreenContentDelegate {
     func adDidRecordImpression(_ ad: GADFullScreenPresentingAd) {
-        print("\(debugName) did record impression for ad: \(ad)")
+        sdkDebugPrint("\(debugName) did record impression for ad: \(ad)")
     }
 
     func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {

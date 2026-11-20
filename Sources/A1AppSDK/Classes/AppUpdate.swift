@@ -47,7 +47,7 @@ public class AppUpdate {
             return false
         }
         if config.minVersion.compare(appVersion, options: .numeric) == .orderedDescending {
-            print("force version is newer than app version")
+            sdkDebugPrint("force version is newer than app version")
             EventManager.shared.logEvent(title: AppUpdateKey.event_force_update_home_pop_up_loaded.rawValue)
             let handler: (UIAlertAction) -> () = { [weak self] (alert) in
                 EventManager.shared.logEvent(title: AppUpdateKey.event_force_update_home_update_now_clicked.rawValue)
@@ -76,7 +76,7 @@ public class AppUpdate {
             return false
         }
         if config.stableVersion.compare(appVersion, options: .numeric) == .orderedDescending {
-            print("optional version is newer than app version")
+            sdkDebugPrint("optional version is newer than app version")
             EventManager.shared.logEvent(title: AppUpdateKey.event_optional_update_home_pop_up_loaded.rawValue)
             let handler: (UIAlertAction) -> () = { [weak self] (alert) in
                 self?.isOptionalUpdateShown = true
