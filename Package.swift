@@ -17,7 +17,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/Alamofire/Alamofire.git", exact: "5.12.2"),
-        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "12.19.3"),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "13.2.0"),
         // Stay on 18.0.3: 18.1.0–19.0.1 ship arm64e slices that can stop apps launching on
         // iOS 17–18 after an App Store update (facebook-ios-sdk #3997). Move up once a fixed
         // release is out.
@@ -25,9 +25,9 @@ let package = Package(
         .package(url: "https://github.com/appmetrica/appmetrica-sdk-ios", exact: "6.7.1"),
         .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "11.2.0"),
         .package(url: "https://github.com/BeauNouvelle/ShimmerSwift", exact: "2.2.0"),
-        .package(url: "https://github.com/microsoft/clarity-apps", exact: "3.5.4"),
-        .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.11.0"),
-        .package(url: "https://github.com/adaptyteam/AdaptySDK-iOS.git", exact: "4.3.1")
+        .package(url: "https://github.com/microsoft/clarity-apps", exact: "4.1.2"),
+        .package(url: "https://github.com/intercom/intercom-ios-sp", exact: "19.12.0"),
+        .package(url: "https://github.com/adaptyteam/AdaptySDK-iOS.git", exact: "4.3.2")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -52,7 +52,7 @@ let package = Package(
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseRemoteConfig", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseStorage", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseAI", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseAILogic", package: "firebase-ios-sdk"),
 // MARK: - Facebook
                 .product(name: "FacebookCore", package: "facebook-ios-sdk"),
                 .product(name: "FacebookLogin", package: "facebook-ios-sdk"),
