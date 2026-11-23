@@ -70,6 +70,8 @@ class AdsFullScreen: NSObject {
     private let debugName: String
     private let events: Events
     private let notLoadedError: AdsError
+    /// Format reported through `Ads.eventHandler`; nil sends no lifecycle events.
+    private let format: AdsFormat?
     /// Extra work on dismissal: the interstitial stamps `AdsHandler.shared.interLoadTime`.
     private let onDismiss: (() -> Void)?
     private let loader: Loader
@@ -88,6 +90,7 @@ class AdsFullScreen: NSObject {
          debugName: String,
          events: Events,
          notLoadedError: AdsError,
+         format: AdsFormat? = nil,
          onDismiss: (() -> Void)? = nil,
          loader: @escaping Loader) {
         self.adUnitId = adUnitId
@@ -95,6 +98,7 @@ class AdsFullScreen: NSObject {
         self.debugName = debugName
         self.events = events
         self.notLoadedError = notLoadedError
+        self.format = format
         self.onDismiss = onDismiss
         self.loader = loader
     }
@@ -107,6 +111,7 @@ class AdsFullScreen: NSObject {
 
     func load() {
         log(events.loadStart)
+        emit(AdsLifecycleEvent.loadStarted)
         loader(adUnitId, request()) { [weak self] ad, error in
             guard let self = self else { return }
 
@@ -115,10 +120,13 @@ class AdsFullScreen: NSObject {
                 if self.events.appError != nil {
                     self.log(.event_ad_error_load_failed, error.localizedDescription)
                 }
-                self.onError?(error)
+                /// Not `onError`: those are the callbacks of the last show, which
+                /// has already finished — a show with no ad fails on its own.
+                self.emit { .loadFailed($0, error) }
                 return
             }
             self.log(self.events.loaded)
+            self.emit(AdsLifecycleEvent.loaded)
             self.ad = ad
             self.ad?.fullScreenContentDelegate = self
         }
@@ -165,6 +173,11 @@ class AdsFullScreen: NSObject {
 
     // MARK: - Analytics
 
+    private func emit(_ event: (AdsFormat) -> AdsLifecycleEvent) {
+        guard let format = format else { return }
+        Ads.shared.emit(event(format))
+    }
+
     private func log(_ key: AdsKey?) {
         guard let key = key else { return }
         EventManager.shared.logEvent(title: key.rawValue)
@@ -181,6 +194,11 @@ class AdsFullScreen: NSObject {
 extension AdsFullScreen: GADFullScreenContentDelegate {
     func adDidRecordImpression(_ ad: GADFullScreenPresentingAd) {
         sdkDebugPrint("\(debugName) did record impression for ad: \(ad)")
+        emit(AdsLifecycleEvent.impression)
+    }
+
+    func adDidRecordClick(_ ad: GADFullScreenPresentingAd) {
+        emit(AdsLifecycleEvent.clicked)
     }
 
     func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
@@ -204,6 +222,7 @@ extension AdsFullScreen: GADFullScreenContentDelegate {
         if events.appError != nil {
             log(.event_ad_error_show_failed, error.localizedDescription)
         }
+        emit { .presentFailed($0, error) }
         onError?(error)
     }
 }

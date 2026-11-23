@@ -31,6 +31,20 @@ public final class Ads: NSObject {
     private var rewardedInterstitialAd: AdsRewardedInterstitialType?
     private var nativeAd: AdsNativeType?
     private var disabled = false
+
+    /// Receives load, failure, impression and click events for every ad format.
+    /// Always called on the main thread. Optional; `nil` by default.
+    public var eventHandler: ((AdsLifecycleEvent) -> Void)?
+
+    /// `true` (default, the existing behaviour): asking for an app open ad that is
+    /// not loaded yet starts a load and presents the ad by itself as soon as it
+    /// arrives. `false`: such a request fails straight away with
+    /// `AdsError.appOpenAdNotLoaded` and nothing is presented later.
+    public var appOpenShowsWhenLoaded = true
+
+    /// A loaded app open ad older than this is discarded unused and reloaded,
+    /// as AdMob recommends. Default 4 hours.
+    public var appOpenExpiry: TimeInterval = 4 * 3600
     
     // MARK: - Initialization
     
@@ -141,8 +155,11 @@ extension Ads: AdsType {
     }
 
     public func configureRewardedAds() {
-        // Gated on `appOpenEnabled` rather than `rewardedEnabled` — preserved exactly as shipped.
-        guard let config = configuration, config.appOpenEnabled, let builder = requestBuilder else { return }
+        // Previously gated on `appOpenEnabled` only, so rewarded ads never loaded while
+        // app open was off. `appOpenEnabled` is still honoured so apps that relied on it
+        // keep loading rewarded ads.
+        guard let config = configuration, config.rewardedEnabled || config.appOpenEnabled,
+              let builder = requestBuilder else { return }
         rewardedAd = AdsRewarded(adUnitId: config.rewardedID, request: builder.build)
         rewardedAd?.load()
     }
@@ -380,3 +397,16 @@ private extension Ads {
     }
 }
 
+// MARK: - Lifecycle events
+
+extension Ads {
+    /// Reports an event to `eventHandler` on the main thread.
+    func emit(_ event: AdsLifecycleEvent) {
+        guard let handler = eventHandler else { return }
+        if Thread.isMainThread {
+            handler(event)
+        } else {
+            DispatchQueue.main.async { handler(event) }
+        }
+    }
+}

@@ -32,6 +32,7 @@ final class AdsRewarded: AdsFullScreen, AdsRewardedType {
                            loaded: .event_ad_rewarded_loaded, showRequested: .event_ad_rewarded_show_requested,
                            shown: .event_ad_rewarded_shown, showFailed: .event_ad_rewarded_show_failed),
             notLoadedError: .rewardedAdNotLoaded,
+            format: .rewarded,
             loader: { adUnitId, request, completion in
                 GADRewardedAd.load(withAdUnitID: adUnitId, request: request) { completion($0, $1) }
             }

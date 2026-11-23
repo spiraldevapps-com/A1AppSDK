@@ -34,6 +34,7 @@ final class AdsInterstitial: AdsFullScreen, AdsInterstitialType {
                            appError: AppErrorMessages(notLoaded: "Interstitial ad not loaded",
                                                       cantPresent: "Interstitial ad can't present")),
             notLoadedError: .interstitialAdNotLoaded,
+            format: .interstitial,
             onDismiss: { AdsHandler.shared.interLoadTime = Date() },
             loader: { adUnitId, request, completion in
                 GADInterstitialAd.load(withAdUnitID: adUnitId, request: request) { completion($0, $1) }

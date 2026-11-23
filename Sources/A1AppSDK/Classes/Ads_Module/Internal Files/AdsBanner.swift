@@ -118,9 +118,15 @@ extension AdsBanner: GADBannerViewDelegate {
     // Request lifecycle events
     func bannerViewDidRecordImpression(_ bannerView: GADBannerView) {
         debugLog("AdsBanner did record impression for banner ad")
+        Ads.shared.emit(.impression(.banner))
+    }
+
+    func bannerViewDidRecordClick(_ bannerView: GADBannerView) {
+        Ads.shared.emit(.clicked(.banner))
     }
     
     func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+        Ads.shared.emit(.loaded(.banner))
         onOpen?()
         shimmer.isHidden = true
         debugLog("AdsBanner did receive ad from: \(bannerView.responseInfo?.loadedAdNetworkResponseInfo?.adNetworkClassName ?? "not found")")
@@ -129,6 +135,7 @@ extension AdsBanner: GADBannerViewDelegate {
     func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
         EventManager.shared.logEvent(title: AdsKey.event_ad_banner_load_failed.rawValue)
         EventManager.shared.logEvent(title: AppErrorKey.event_ad_error_load_failed.rawValue, key: "error", value: error.localizedDescription)
+        Ads.shared.emit(.loadFailed(.banner, error))
         onError?(error)
         shimmer.isHidden = true
     }
